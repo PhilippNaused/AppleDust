@@ -1,0 +1,37 @@
+* text=auto
+
+*.txt eol=lf
+
+# Source code
+*.cs diff=csharp eol=lf
+*.tt diff=csharp eol=crlf
+*.cpp diff=cpp eol=lf
+*.c diff=cpp eol=lf
+*.h diff=cpp eol=lf
+*.md diff=markdown eol=lf
+*.ps1 eol=lf
+
+ # Binary
+*.7z -text
+*.br -text
+*.gz -text
+*.tar -text
+*.zip -text
+*.exe -text
+*.bin -text
+
+# XML files
+*.xml eol=lf
+*.csproj eol=lf
+*.nuspec eol=lf
+*.config eol=lf
+*.props eol=lf
+*.targets eol=lf
+*.slnx eol=crlf
+
+# JSON files
+*.json eol=lf
+
+# YAML files
+*.yml eol=lf
+*.yaml eol=lf

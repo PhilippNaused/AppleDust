@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="src/AppleDust.Cli/AppleDust.Cli.csproj" />
+  <Project Path="src/AppleDust.Shared/AppleDust.Shared.csproj" />
+  <Project Path="src/AppleDust/AppleDust.csproj" />
+  <Project Path="tests/AppleDust.Tests/AppleDust.Tests.csproj" />
+</Solution>

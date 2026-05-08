@@ -1,0 +1,8 @@
+{
+  "xml.format.emptyElements": "collapse",
+  "xml.format.maxLineWidth": 0,
+  "xml.format.splitAttributes": "alignWithFirstAttr",
+  "markdown.extension.tableFormatter.delimiterRowNoPadding": true,
+  "msbuildProjectTools.nuget.disablePreFetch": true,
+  "msbuildProjectTools.nuget.includePreRelease": true
+}

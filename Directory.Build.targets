@@ -1,0 +1,51 @@
+<Project>
+
+  <ItemGroup>
+    <!-- Workaround for https://github.com/microsoft/vscode-dotnettools/issues/2952 -->
+    <None Update="*.lscache"
+          Visible="false" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Banned API analyzer -->
+    <AdditionalFiles Include="$(MSBuildThisFileDirectory)BannedSymbols.txt"
+                     Visible="false" />
+  </ItemGroup>
+
+  <Target Name="PublishAll"
+          Condition=" '$(TargetFramework)' == '' ">
+    <!-- https://stackoverflow.com/questions/43947599/how-to-publish-for-all-target-frameworks -->
+    <ItemGroup>
+      <_PublishFramework Include="$(TargetFrameworks)" />
+      <!--
+      Remove net9.0 if we're running on MacOS.
+      For some reason, the AOT tests always fail with "Zero tests ran" when net9.0 is running on MacOS.
+      TODO:: investigate
+      -->
+      <_PublishFramework Remove="net9.0"
+                         Condition="$([System.OperatingSystem]::IsMacOS())" />
+    </ItemGroup>
+    <ItemGroup>
+      <_Project Include="$(MSBuildProjectFile)"
+                Condition="$([MSBuild]::IsTargetFrameworkCompatible('%(_PublishFramework.Identity)', 'net8.0'))"
+                AdditionalProperties="TargetFramework=%(_PublishFramework.Identity);PublishDir=$([System.IO.Path]::Combine('$(PublishDir)', '%(_PublishFramework.Identity)'))" />
+    </ItemGroup>
+    <MSBuild Projects="@(_Project)"
+             BuildInParallel="true"
+             Targets="Publish" />
+  </Target>
+
+  <!-- Build Debug and Release (in parallel) -->
+  <Target Name="BuildAll">
+    <ItemGroup>
+      <_Project Include="$(MSBuildProjectFile)"
+                AdditionalProperties="Configuration=Debug" />
+      <_Project Include="$(MSBuildProjectFile)"
+                AdditionalProperties="Configuration=Release" />
+    </ItemGroup>
+    <MSBuild Projects="@(_Project)"
+             BuildInParallel="true"
+             Targets="Build" />
+  </Target>
+
+</Project>

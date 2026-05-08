@@ -1,0 +1,57 @@
+<Project>
+
+  <!-- Build settings -->
+  <PropertyGroup>
+    <SatelliteResourceLanguages>en-US</SatelliteResourceLanguages>
+    <NeutralLanguage>en-US</NeutralLanguage>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>preview</LangVersion>
+    <Nullable>enable</Nullable>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <IsWindows>$([System.OperatingSystem]::IsWindows())</IsWindows>
+    <AssemblyOriginatorKeyFile>$(MSBuildThisFileDirectory)AppleDust.snk</AssemblyOriginatorKeyFile>
+    <SnkPublicKey>0024000004800000940000000602000000240000525341310004000001000100dd5aaf9dfcf30dc5f78e30f2ccbd27f7dc88c9a8db26eda6ed229b883fd34edbdcffce799b053db93a3c4d288e976266f67acb9cd2fa5d24c3642e5b8191d53aebe1954a64512f7d9e992eeb779d011e2c25b4b76d8cacde8f0c675c8093a2f4b8eaafbf6ff24e271d502b023c5f5f2afced11ed447be096d332d3f8c4f70fcd</SnkPublicKey>
+    <SignAssembly>true</SignAssembly>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <EnableTUnitPolyfills>false</EnableTUnitPolyfills>
+    <TestingPlatformCommandLineArguments>--disable-logo</TestingPlatformCommandLineArguments>
+  </PropertyGroup>
+
+  <!-- Code Analysis -->
+  <PropertyGroup>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <!-- TODO: fix -->
+    <NoWarn>CS1591</NoWarn>
+    <WarningsNotAsErrors>CS1591</WarningsNotAsErrors>
+    <TrimmerSingleWarn>false</TrimmerSingleWarn>
+    <CodeAnalysisTreatWarningsAsErrors>false</CodeAnalysisTreatWarningsAsErrors>
+    <RunAnalyzersDuringLiveAnalysis>True</RunAnalyzersDuringLiveAnalysis>
+    <RunAnalyzersDuringBuild>True</RunAnalyzersDuringBuild>
+    <MSBuildTreatWarningsAsErrors>True</MSBuildTreatWarningsAsErrors>
+    <AnalysisLevel>10.0</AnalysisLevel>
+    <AnalysisMode>All</AnalysisMode>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <!-- <AnalysisModeStyle>Recommended</AnalysisModeStyle> -->
+  </PropertyGroup>
+
+  <!-- Package properties -->
+  <PropertyGroup>
+    <Configuration Condition="'$(Configuration)' == ''">Debug</Configuration>
+    <Version Condition="'$(Version)' == ''">0.0.0.0-Dev.$(Configuration)</Version>
+    <Product>AppleDust</Product>
+    <Description>Microbenchmarking tool for .NET</Description>
+    <Author>Philipp Naused</Author>
+    <Company>$(Author)</Company>
+    <RepositoryUrl>https://github.com/PhilippNaused/AppleDust</RepositoryUrl>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <PackageProjectUrl>$(RepositoryUrl)</PackageProjectUrl>
+    <Copyright>© $(Company)</Copyright>
+    <RepositoryType>git</RepositoryType>
+    <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+  </PropertyGroup>
+
+</Project>

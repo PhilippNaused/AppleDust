@@ -1,0 +1,14 @@
+{
+  "recommendations": [
+    "streetsidesoftware.code-spell-checker",
+    "editorconfig.editorconfig",
+    "eamodio.gitlens",
+    "yzhang.markdown-all-in-one",
+    "ms-vscode.powershell",
+    "github.vscode-github-actions",
+    "bierner.markdown-emoji",
+    "ms-dotnettools.csdevkit",
+    "redhat.vscode-xml",
+    "tintoy.msbuild-project-tools"
+  ]
+}
