@@ -71,6 +71,7 @@ catch (OperationCanceledException)
 }
 catch (AppleServer.ClientException e)
 {
+    AnsiConsole.WriteLine(e.Message);
     AnsiConsole.WriteLine(e.RemoteStackTrace);
 }
 #pragma warning disable CA1031 // Do not catch general exception types

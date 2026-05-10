@@ -16,9 +16,11 @@ internal class SerializationTests
             ("1%2C2%2C3", new[] {1,2,3}),
             ("", Array.Empty<int>()),
             ("", Array.Empty<string>()),
-            ("1%2C2%252C3%2C", new[] {new []{1}, new []{2,3}, Array.Empty<int>()}),
+            ("1%2C2%252C3%2C", new[] {[1], [2,3], Array.Empty<int>()}),
             ("H%2Ce%2Cy", new[] {"H","e","y"}),
             ("%2560%2C%257C%2C%252C%2C%250A", new[] {"`","|",",", "\n"}),
+            ("7%2C8", (7L, 8L)),
+            ("Hello%2CTrue%2C9", ("Hello", true, 9LU)),
         ];
 
     [Test]
