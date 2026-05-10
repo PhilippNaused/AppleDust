@@ -134,6 +134,7 @@ internal sealed class AppleClient : IAppleClient
         {
             Task<int> t => t.Result,
             Task<long> t => t.Result,
+            Task<(long, long)> t => t.Result,
             Task<double> t => t.Result,
             Task<string> t => t.Result,
             Task<string[]> t => t.Result,
@@ -170,7 +171,7 @@ internal sealed class AppleClient : IAppleClient
 #pragma warning restore CA1849 // Call async methods when in an async method
     }
 
-    public Task<long> GetSample(string name, int iterations) => Task.FromResult(Get(name).Measure(iterations));
+    public Task<(long Nanos, long Bytes)> GetSample(string name, int iterations) => Task.FromResult(Get(name).Measure(iterations));
 
     public Task<string[]> GetNames() => Task.FromResult(_benchmarks.Select(b => b.Name).ToArray());
 }

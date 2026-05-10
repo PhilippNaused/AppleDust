@@ -79,17 +79,6 @@ internal static class Utils2
         return (mean, variance);
     }
 
-    public static ImmutableArray<double> Divide(ImmutableArray<double> sample, ImmutableArray<double> divisor)
-    {
-        int c = Min(sample.Length, divisor.Length);
-        var result = ImmutableArray.CreateBuilder<double>(c);
-        for (int i = 0; i < c; i++)
-        {
-            result.Add(sample[i] / divisor[i]);
-        }
-        return result.ToImmutable();
-    }
-
     private static double[] GetRatios(ImmutableArray<double> x, ImmutableArray<double> y, double[] p)
     {
         x = x.RemoveAll(NotPositive).Sort();
@@ -100,7 +89,7 @@ internal static class Utils2
         static bool NotPositive(double d) => d <= 0;
     }
 
-    public static (double Ratio, double Margin) GetRatio2(ImmutableArray<double> x, ImmutableArray<double> y, double error = 0.05)
+    public static (double Ratio, double Margin) GetRatio(ImmutableArray<double> x, ImmutableArray<double> y, double error = 0.05)
     {
         const double mid = 0.5d;
         var ratios = GetRatios(x, y, [mid - error, mid, mid + error]);
