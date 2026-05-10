@@ -83,7 +83,7 @@ internal sealed class AppleServer : IAppleClient
 
     public Task<int[]> WarmUp(int targetMs) => InvokeAsync<int[]>(WarmUp, targetMs);
 
-    public Task<long> GetSample(string name, int iterations) => InvokeAsync<long>(GetSample, name, iterations);
+    public Task<(long Nanos, long Bytes)> GetSample(string name, int iterations) => InvokeAsync<(long Nanos, long Bytes)>(GetSample, name, iterations);
 
     public Task<string[]> GetNames() => InvokeAsync<string[]>(GetNames);
 }

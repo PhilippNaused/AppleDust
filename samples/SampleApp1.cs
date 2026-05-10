@@ -16,25 +16,27 @@ var builder = new BenchmarkBuilder();
 // #pragma warning restore RS0030 // Do not use banned APIs
 // builder.Add(() => null as object, "null");
 
-builder.Add(() => Wait(100), "base");
-builder.Add(() => Wait(20));
-builder.Add(() => Wait(97));
-builder.Add(() => Wait(98));
-builder.Add(() => Wait(99));
-builder.Add(() => Wait(100));
-builder.Add(() => Wait(101));
-builder.Add(() => Wait(102));
-builder.Add(() => Wait(103));
-builder.Add(() => Wait(200));
-builder.UseOverhead(() => Wait(0));
+builder.Add(() => Work(100), "base");
+builder.Add(() => Work(1));
+builder.Add(() => Work(20));
+builder.Add(() => Work(97));
+builder.Add(() => Work(98));
+builder.Add(() => Work(99));
+builder.Add(() => Work(100));
+builder.Add(() => Work(101));
+builder.Add(() => Work(102));
+builder.Add(() => Work(103));
+builder.Add(() => Work(200));
+builder.UseOverhead(() => Work(0));
 
 await builder.RunAsync(args).ConfigureAwait(false);
 
-static object? Wait(int it)
+static object? Work(int it)
 {
+    byte[] a = [];
     for (int i = 0; i < it; i++)
     {
-        // do nothing
+        a = new byte[1024];
     }
-    return null;
+    return a;
 }

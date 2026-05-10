@@ -6,6 +6,7 @@ datacollector
 Decompiler
 Diagnoser
 EditorBrowsable
+Finalizers
 Linq
 lscache
 msbuild

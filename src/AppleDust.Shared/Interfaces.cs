@@ -5,6 +5,6 @@ namespace AppleDust.Shared;
 internal interface IAppleClient : IDisposable
 {
     Task<int[]> WarmUp(int targetMs);
-    Task<long> GetSample(string name, int iterations);
+    Task<(long Nanos, long Bytes)> GetSample(string name, int iterations);
     Task<string[]> GetNames();
 }

@@ -36,10 +36,19 @@ internal sealed class StatusDisplay : IRenderable
         public abstract Markup GetMarkup();
         public Style Style = Style.Plain;
         public Justify Justification = Justify.Right;
+        protected static readonly Markup EmptyMarkup = new("");
+        protected static readonly Markup NA = new("n/a", Styles.Dim);
     }
     private record NumberColumn(string Name, Func<double, string> FormatFunc) : TableColumn<double?>(Name, (s) => s is not null ? FormatFunc(s.Value) : "")
     {
-        public NumberColumn(string name, [StringSyntax(StringSyntaxAttribute.NumericFormat)] string Format) : this(name, (d) => d.ToString(Format))
+        public NumberColumn(string name, [StringSyntax(StringSyntaxAttribute.NumericFormat)] string Format) : this(name, (d) =>
+        {
+            if (double.IsNaN(d))
+            {
+                return "NaN";
+            }
+            return d.ToString(Format);
+        })
         { }
     }
     private record StringColumn(string Name) : TableColumn<string>(Name, static (s) => s);
@@ -52,9 +61,12 @@ internal sealed class StatusDisplay : IRenderable
             {
                 return EmptyMarkup;
             }
+            if (Value is double d && double.IsNaN(d))
+            {
+                return NA.Justify(Justification);
+            }
             return new Markup(Func(Value), Style).Justify(Justification);
         }
-        private static readonly Markup EmptyMarkup = new("");
     }
 
     private sealed record TableRow
@@ -69,6 +81,9 @@ internal sealed class StatusDisplay : IRenderable
         public readonly NumberColumn PValue = new("p-value", "G2");
         public readonly NumberColumn Score = new("Score", "F2");
 
+        public readonly NumberColumn Memory = new("Alloc", "N0");
+        public readonly NumberColumn MemorySD = new("Alloc SD", "F1");
+        public readonly NumberColumn MemoryRatio = new("Alloc Ratio", "P1");
         public readonly NumberColumn Samples = new("Samples", "N0");
         // public readonly NumberColumn Iterations = new("Iterations", "N0");
 
@@ -106,7 +121,7 @@ internal sealed class StatusDisplay : IRenderable
         foreach (var bench in _benchmarks)
         {
             var row = new TableRow();
-            rows.Add(row);
+
             var name = bench.Name;
             var stat = bench.Stats;
             var mean = stat.Mean;
@@ -135,27 +150,46 @@ internal sealed class StatusDisplay : IRenderable
             }
             else
             {
-                var (tStat, df, pValue) = Utils2.WelchTest(samples, baseSamples);
+                var (_, _, pValue) = Utils2.WelchTest(samples, baseSamples);
 
-                var (ratio, score, ratioMargin) = GetScore(samples, baseSamples, 0.1);
+                var (ratio, score, ratioMargin) = GetRatioScore(samples, baseSamples, 0.1);
                 var ratioStyle = GetRatioStyle(ratio, score, pValue);
 
                 row.Ratio.Value = ratio;
                 row.Ratio.Style = ratioStyle;
                 row.RatioMargin.Value = ratioMargin;
-                //row.TStat.Value = tStat;
                 row.PValue.Value = pValue;
                 const double significanceLevel = 0.01;
-                row.PValue.Style = double.IsNaN(pValue) ? Styles.Dim : SignificanceColor(pValue <= significanceLevel);
+                row.PValue.Style = SignificanceColor(pValue <= significanceLevel);
                 row.Score.Value = score;
-                row.Score.Style = double.IsNaN(score) ? Styles.Dim : SignificanceColor(score > 1);
+                row.Score.Style = SignificanceColor(score > 1);
             }
 
+            // Memory measurements
+            {
+                row.Memory.Value = bench.GcStats.Mean;
+                row.MemorySD.Value = bench.GcStats.StdDev;
+
+                if (bench.IsBaseline)
+                {
+                    row.MemoryRatio.Value = 1;
+                }
+                else if (!bench.IsOverhead)
+                {
+                    var (_, _, pValue) = Utils2.WelchTest(bench.GcStats.Samples, baseline.GcStats.Samples);
+
+                    var (ratio, score, _) = GetRatioScore(bench.GcStats.Samples, baseline.GcStats.Samples, 0.1);
+                    var ratioStyle = GetRatioStyle(ratio, score, pValue);
+                    row.MemoryRatio.Value = ratio;
+                    row.MemoryRatio.Style = ratioStyle;
+                }
+            }
+            rows.Add(row);
             _ = _table.AddRow(row.GetColumns().Select(c => c.GetMarkup()));
         }
     }
 
-    private static (double Ratio, double Score, double Margin) GetScore(ImmutableArray<double> samples, ImmutableArray<double> baseSamples, double error)
+    private static (double Ratio, double Score, double Margin) GetRatioScore(ImmutableArray<double> samples, ImmutableArray<double> baseSamples, double error)
     {
         const int minLength = 4;
         if (samples.Length < minLength || baseSamples.Length < minLength)
@@ -167,7 +201,7 @@ internal sealed class StatusDisplay : IRenderable
             }
             return (double.NaN, double.NaN, double.NaN);
         }
-        var (ratio, margin) = Utils2.GetRatio2(samples, baseSamples, error);
+        var (ratio, margin) = Utils2.GetRatio(samples, baseSamples, error);
         return (ratio, Math.Abs(ratio - 1) / margin, margin);
     }
 
