@@ -17,6 +17,6 @@
     <PackageVersion Include="Pragmastat" Version="12.1.0" />
     <PackageVersion Include="Spectre.Console.Analyzer" Version="1.0.0" />
     <PackageVersion Include="Spectre.Console.Cli" Version="0.55.0" />
-    <PackageVersion Include="TUnit" Version="1.43.37" />
+    <PackageVersion Include="TUnit" Version="1.43.41" />
   </ItemGroup>
 </Project>
