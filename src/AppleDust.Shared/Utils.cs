@@ -35,13 +35,20 @@ internal static class Utils
         {
             text = s;
         }
+#if NETCOREAPP
+        const char sep = ListSeparator;
+#else
+        string sep = ListSeparator.ToString();
+#endif
+        if (obj.GetType().IsTuple)
+        {
+            var fields = obj.GetType().GetFields();
+            var values = fields.Select(f => f.GetValue(obj));
+            var texts = values.Select(Serialize!);
+            text = string.Join(sep, texts);
+        }
         else if (obj is IList list)
         {
-#if NETCOREAPP
-            const char sep = ListSeparator;
-#else
-            string sep = ListSeparator.ToString();
-#endif
             text = string.Join(sep, list.Cast<object>().Select(Serialize));
         }
         else
@@ -60,9 +67,20 @@ internal static class Utils
             return text;
         if (type.IsPrimitive)
             return Convert.ChangeType(text, type, CultureInfo.InvariantCulture);
+        if (type.IsTuple)
+        {
+            var fields = type.GetFields();
+            var instance = Activator.CreateInstance(type)!;
+            var split = text.Split([ListSeparator], StringSplitOptions.None);
+            for (var i = 0; i < fields.Length; i++)
+            {
+                var value = Deserialize(split[i], fields[i].FieldType);
+                fields[i].SetValue(instance, value);
+            }
+            return instance;
+        }
         if (type.IsArray)
         {
-#pragma warning disable IL3050
             var innerType = type.GetElementType()!;
             if (text.Length == 0)
             {
@@ -73,7 +91,6 @@ internal static class Utils
             var array = Array.CreateInstance(innerType, result.Length);
             result.CopyTo(array, 0);
             return array;
-#pragma warning restore IL3050
         }
 
         throw new NotSupportedException($"Cannot parse type {type.FullName}");
@@ -86,5 +103,12 @@ internal static class Utils
     extension(Stopwatch sw)
     {
         public long ElapsedNanoseconds => sw.ElapsedTicks * StopwatchNanosecondsPerTick;
+    }
+
+    extension(Type type)
+    {
+        public bool IsTuple =>
+            type.IsGenericType &&
+            type.FullName?.StartsWith("System.ValueTuple`", StringComparison.Ordinal) == true;
     }
 }
