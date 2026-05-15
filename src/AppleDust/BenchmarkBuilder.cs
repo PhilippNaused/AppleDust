@@ -26,7 +26,7 @@ public sealed class BenchmarkBuilder
         {
             _ = UseOverhead(Nothing);
         }
-        return AppleClient.RunAsync(_benchmarks, args);
+        return AppleWorker.RunAsync(_benchmarks, args);
     }
 
     // For some reason, this method is faster when it's an instance method instead of static.

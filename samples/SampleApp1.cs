@@ -17,15 +17,12 @@ var builder = new BenchmarkBuilder();
 // builder.Add(() => null as object, "null");
 
 builder.Add(() => Work(100), "base");
-builder.Add(() => Work(1));
 builder.Add(() => Work(20));
-builder.Add(() => Work(97));
 builder.Add(() => Work(98));
 builder.Add(() => Work(99));
 builder.Add(() => Work(100));
 builder.Add(() => Work(101));
 builder.Add(() => Work(102));
-builder.Add(() => Work(103));
 builder.Add(() => Work(200));
 builder.UseOverhead(() => Work(0));
 
@@ -33,10 +30,8 @@ await builder.RunAsync(args).ConfigureAwait(false);
 
 static object? Work(int it)
 {
-    byte[] a = [];
-    for (int i = 0; i < it; i++)
+    for (int i = 0; i < it * 10; i++)
     {
-        a = new byte[1024];
     }
-    return a;
+    return null;
 }

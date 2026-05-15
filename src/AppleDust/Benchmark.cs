@@ -34,12 +34,15 @@ internal abstract class Benchmark(string name)
     [MethodImpl(Utils.AggressiveOptimization)]
     internal (long Nanos, long Bytes) Measure(int iterations)
     {
-        GCHelper.ForceGcCollect();
-        var before = GCHelper.GetAllocatedBytes();
-        var sw = Stopwatch.StartNew();
+        GcHelper.ForceGcCollect();
+        var sw = new Stopwatch();
+        var before = GcHelper.GetAllocatedBytes();
+        sw.Start();
         Run(iterations);
-        var after = GCHelper.GetAllocatedBytes();
-        return (sw.ElapsedNanoseconds, after - before);
+        sw.Stop();
+        var after = GcHelper.GetAllocatedBytes();
+        var bytes = after >= 0 ? after - before : -1;
+        return (sw.ElapsedNanoseconds, bytes);
     }
 
     [MethodImpl(Utils.AggressiveOptimization)]
@@ -48,7 +51,7 @@ internal abstract class Benchmark(string name)
         long targetNs = targetMs * 1_000_000L;
 
         long timeNs;
-        while ((timeNs = Measure(iterations).Nanos) < targetNs)
+        while ((timeNs = Measure(iterations).Nanos) < targetNs * 1.1)
         {
             iterations *= 2;
         }

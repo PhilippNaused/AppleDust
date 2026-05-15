@@ -10,6 +10,7 @@ internal static class Utils
     public const string OverheadBenchmarkName = "Overhead";
     public const char CommandSeparator = '|';
     public const char ListSeparator = ',';
+    public const string ErrorPrefix = "Error:";
 
     public const int JitDelayMs = 500;
     public const int MinIterations = 4;

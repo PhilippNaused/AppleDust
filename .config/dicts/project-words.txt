@@ -1,6 +1,8 @@
 accessibilities
 buildtransitive
+cctor
 contentfiles
+COREHOST
 Coverable
 datacollector
 Decompiler
@@ -22,5 +24,6 @@ Renderable
 slnf
 slnx
 snupkg
+Sparity
 stackalloc
 SYSLIB

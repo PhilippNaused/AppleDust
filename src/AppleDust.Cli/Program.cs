@@ -3,9 +3,8 @@ using AppleDust.Cli;
 using AppleDust.Shared;
 using Spectre.Console;
 
-var path = args[0];
-
 const int maxRounds = 200;
+const int restartCount = 5;
 
 using var cts = new CancellationTokenSource();
 Console.CancelKeyPress += (s, e) =>
@@ -16,60 +15,87 @@ Console.CancelKeyPress += (s, e) =>
 
 try
 {
-    using var server = new AppleServer(path, cts.Token);
+    var paths = args.Select(Path.GetFullPath).ToList();
+    using var hosts = await HostCollection.CreateAsync(paths, cts.Token);
 
     await Utils.Delay(cts.Token);
 
-    var names = await server.GetNames();
-
     var sw = Stopwatch.StartNew();
-    var iterations = await server.WarmUp(Utils2.TargetMs).WithStatus("Warmup...");
+    await hosts.WarmUp().WithStatus("Warmup...");
     sw.Stop();
     AnsiConsole.WriteLine($"Warmup completed in {sw.Elapsed.TotalSeconds:F1} s");
 
-    var benchmarks = names.Select((name, i) => new Benchmark(server, name, iterations[i])).ToList();
-    var overheadBench = benchmarks.Single(b => b.IsOverhead);
-    benchmarks.First(b => !b.IsOverhead).IsBaseline = true;
-    foreach (var benchmark in benchmarks)
+    await Utils.Delay(cts.Token);
+
+    var status = new StatusDisplay(hosts.Benchmarks);
+    status.Refresh();
+    var dash = new Dashboard(status);
+
+    async Task MainLoop()
     {
-        benchmark.Overhead = overheadBench;
-    }
-
-    await Task.Delay(5_000, cts.Token).WithStatus("5s delay");
-
-    var status = new StatusDisplay(benchmarks);
-
-    await AnsiConsole.Live(status).StartAsync(async ctx =>
-    {
+    start:
         for (int i = 0; i < maxRounds; i++)
         {
-            foreach (var bench in benchmarks)
+            // Add benchmarks that have discarded samples a second time.
+            List<Benchmark> benches = [.. hosts.Benchmarks, .. hosts.Benchmarks.Where(b => b.SampleCount < i)];
+
+            foreach (var bench in benches.Shuffle()) // shuffle benchmarks to avoid bias.
             {
+                while (dash.CpuQuality < 0)
+                {
+                    status.SetBorderColor(Color.Red);
+                    // high CPU usage, wait for it to cool down.
+                    await Task.Delay(1000, cts.Token);
+                }
+                status.SetBorderColor(Color.Default);
+
                 await bench.GetSampleAsync();
+                status.Refresh();
+
                 if (Console.KeyAvailable)
                 {
                     var key = Console.ReadKey(true);
                     if (key.Key == ConsoleKey.Delete)
                     {
-                        // reset
-                        i = 0;
-                        foreach (var b in benchmarks)
+                        foreach (var b in hosts.Benchmarks)
                         {
                             b.Reset();
                         }
+                        status.Refresh();
+                        goto start;
                     }
                 }
-                status.Refresh();
-                ctx.Refresh();
+            }
+            if (i % restartCount == restartCount - 1)
+            {
+                await hosts.RestartAsync(true);
             }
         }
+    }
+
+    var main = MainLoop();
+
+    await AnsiConsole.Live(dash).StartAsync(async ctx =>
+    {
+        while (!main.IsCompleted)
+        {
+            dash.Update();
+            ctx.Refresh();
+            await Task.Delay(100, cts.Token);
+        }
     });
+
+    await main;
 }
 catch (OperationCanceledException)
 {
-    AnsiConsole.MarkupLine("[yellow]Cancelled[/]");
+    Cancelled();
 }
-catch (AppleServer.ClientException e)
+catch (EndOfStreamException) when (cts.IsCancellationRequested)
+{
+    Cancelled();
+}
+catch (RpcException e)
 {
     AnsiConsole.WriteLine(e.Message);
     AnsiConsole.WriteLine(e.RemoteStackTrace);
@@ -80,3 +106,5 @@ catch (Exception e)
     AnsiConsole.WriteException(e);
 }
 #pragma warning restore CA1031 // Do not catch general exception types
+
+static void Cancelled() => AnsiConsole.MarkupLine("[yellow]Cancelled[/]");

@@ -21,6 +21,7 @@ internal class SerializationTests
             ("%2560%2C%257C%2C%252C%2C%250A", new[] {"`","|",",", "\n"}),
             ("7%2C8", (7L, 8L)),
             ("Hello%2CTrue%2C9", ("Hello", true, 9LU)),
+            ("Hello%252C1%2CWorld%252C2", new []{("Hello", 1), ("World", 2)})
         ];
 
     [Test]
