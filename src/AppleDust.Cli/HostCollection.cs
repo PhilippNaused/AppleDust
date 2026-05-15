@@ -67,6 +67,7 @@ internal sealed class HostCollection : IReadOnlyCollection<AppleHost>, IDisposab
                 bench.Iterations = iterations;
             }
         });
+        await Task.Delay(2_000);
     }
 
     public Task RestartAsync(bool warmup)

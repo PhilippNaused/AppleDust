@@ -12,11 +12,12 @@ internal static class Utils2
 {
     public static string AsTime(double nanos)
     {
-        if (nanos < 1_000)
+        var abs = Abs(nanos);
+        if (abs < 1_000)
             return $"{nanos:F3} ns";
-        if (nanos < 1_000_000)
+        if (abs < 1_000_000)
             return $"{nanos / 1_000:F3} µs";
-        if (nanos < 1_000_000_000)
+        if (abs < 1_000_000_000)
             return $"{nanos / 1_000_000:F3} ms";
         return $"{nanos / 1_000_000_000:F3} s";
     }
@@ -48,30 +49,24 @@ internal static class Utils2
         return new Stats(center, spread, samples);
     }
 
-    public static (double ratio, double disparity, double pValue) CompareToBaseline(ImmutableArray<double> samples, ImmutableArray<double> baselineSamples)
+    public static (double ratio, double shift, double disparity, double pValue) CompareToBaseline(ImmutableArray<double> samples, ImmutableArray<double> baselineSamples)
     {
         if (samples.Length < 1 || baselineSamples.Length < 1)
         {
-            return (double.NaN, double.NaN, double.NaN);
+            return (double.NaN, double.NaN, double.NaN, double.NaN);
         }
         var s = samples.AsSample();
         var b = baselineSamples.AsSample();
         if (s.Size < 1 || b.Size < 1)
         {
-            return (double.NaN, double.NaN, double.NaN);
+            return (double.NaN, double.NaN, double.NaN, double.NaN);
         }
         double ratio;
-        try
-        {
-            ratio = Toolkit.Ratio(s, b).NominalValue;
-        }
-        catch (AssumptionException)
-        {
-            throw new InvalidOperationException(string.Join(',', s.Values.Concat(b.Values)));
-        }
+        double shift = Toolkit.Shift(s, b).NominalValue;
+        ratio = Toolkit.Ratio(s, b).NominalValue;
         if (s.Size < 2 || b.Size < 2)
         {
-            return (ratio, double.NaN, double.NaN);
+            return (ratio, shift, double.NaN, double.NaN);
         }
         double disparity = double.NaN;
         try
@@ -83,7 +78,7 @@ internal static class Utils2
             // Sparity assumption not met.
         }
         var (_, _, pValue) = WelchTest(samples, baselineSamples);
-        return (ratio, disparity, pValue);
+        return (ratio, shift, disparity, pValue);
     }
 
     /// <summary>

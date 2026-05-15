@@ -73,6 +73,7 @@ internal sealed class StatusDisplay : IRenderable
         // public readonly NumberColumn Spread = new("Spread", Utils2.AsTime);
         public readonly NumberColumn SpreadRel = new("Spread", "P1");
         public readonly NumberColumn Ratio = new("Ratio", "P2");
+        public readonly NumberColumn Shift = new("Shift", Utils2.AsTime);
         public readonly NumberColumn Disparity = new("Disparity", "P1");
         public readonly NumberColumn PValue = new("p-Value", "G2");
 
@@ -143,11 +144,13 @@ internal sealed class StatusDisplay : IRenderable
             {
                 var baseline = bench.Baseline!;
                 var baseSamples = baseline.Stats.Samples;
-                var (ratio, disparity, pValue) = Utils2.CompareToBaseline(samples, baseSamples);
+                var (ratio, shift, disparity, pValue) = Utils2.CompareToBaseline(samples, baseSamples);
                 var ratioStyle = Utils2.GetRatioStyle(ratio, disparity, pValue);
 
                 row.Ratio.Value = ratio;
                 row.Ratio.Style = ratioStyle;
+                row.Shift.Value = shift;
+                row.Shift.Style = ratioStyle;
                 row.PValue.Value = pValue;
                 const double significanceLevel = 0.01;
                 row.PValue.Style = Utils2.SignificanceColor(pValue <= significanceLevel);
@@ -173,7 +176,7 @@ internal sealed class StatusDisplay : IRenderable
                 {
                     if (bench.GcStats.Center > 1 && bench.Baseline!.GcStats.Center > 1)
                     {
-                        var (ratio, disparity, pValue) = Utils2.CompareToBaseline(bench.GcStats.Samples, bench.Baseline!.GcStats.Samples);
+                        var (ratio, shift, disparity, pValue) = Utils2.CompareToBaseline(bench.GcStats.Samples, bench.Baseline!.GcStats.Samples);
                         row.AllocRatio.Value = ratio;
                         row.AllocRatio.Style = Utils2.GetRatioStyle(ratio, disparity, pValue);
                     }
