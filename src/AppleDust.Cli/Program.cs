@@ -39,7 +39,7 @@ try
                     await collection.CoolDown(cts.Token);
                 }
                 status.SetBorderColor(Color.Default);
-
+                collection.State = BenchmarkCollection.StateEnum.Sampling;
                 await bench.GetSampleAsync();
 
                 if (Console.KeyAvailable)

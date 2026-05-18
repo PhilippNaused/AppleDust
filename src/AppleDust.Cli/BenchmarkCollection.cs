@@ -16,6 +16,15 @@ internal sealed class BenchmarkCollection : IReadOnlyCollection<Benchmark>, IDis
 
     /// <inheritdoc />
     public int Count => _benchmarks.Count;
+    public StateEnum State { get; set; } = StateEnum.Idle;
+
+    public enum StateEnum
+    {
+        Idle = 0,
+        Warmup = 1,
+        Cooldown = 2,
+        Sampling = 3,
+    }
 
     private BenchmarkCollection(List<Benchmark> benchmarks)
     {
@@ -68,21 +77,24 @@ internal sealed class BenchmarkCollection : IReadOnlyCollection<Benchmark>, IDis
 
     public async Task WarmUp()
     {
+        State = StateEnum.Warmup;
         _stopwatch.Restart();
         await Parallel.ForEachAsync(_benchmarks.Shuffle(), _parallelOptions, async (bench, _) => await bench.WarmUp());
         _stopwatch.Stop();
         LastWarmupTime = _stopwatch.Elapsed;
+        State = StateEnum.Idle;
     }
 
-#pragma warning disable CA1822 // Mark members as static
-    public Task CoolDown(CancellationToken cancellationToken)
+    public async Task CoolDown(CancellationToken cancellationToken)
     {
-        return Task.Delay(2_000, cancellationToken);
+        State = StateEnum.Cooldown;
+        await Task.Delay(2_000, cancellationToken);
+        State = StateEnum.Idle;
     }
-#pragma warning restore CA1822 // Mark members as static
 
     public async Task RestartAsync(bool warmup)
     {
+        State = StateEnum.Warmup;
         foreach (var benchmark in _benchmarks.Shuffle())
         {
             benchmark.Host.Restart();
@@ -92,6 +104,7 @@ internal sealed class BenchmarkCollection : IReadOnlyCollection<Benchmark>, IDis
             return;
         }
         await WarmUp();
+        State = StateEnum.Idle;
     }
 
     public void Dispose()

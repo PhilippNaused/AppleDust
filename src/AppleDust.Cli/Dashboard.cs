@@ -38,9 +38,14 @@ internal class Dashboard : IRenderable
                 ))
                 .BorderColor(Color.Grey));
 
-        string statusText = $"""
-        Warmup: [{new ProgressBar(_collection.WarmupProgress ?? 0) { Width = 20 }}] ({_collection.LastWarmupTime?.TotalSeconds:F1} s)
-        """;
+        string statusText = _collection.State switch
+        {
+            BenchmarkCollection.StateEnum.Warmup => $"Warmup: [{new ProgressBar(_collection.WarmupProgress ?? 0) { Width = 25 }}]",
+            BenchmarkCollection.StateEnum.Cooldown => "Cooldown...",
+            BenchmarkCollection.StateEnum.Sampling => "Sampling...",
+            BenchmarkCollection.StateEnum.Idle => "Idle...",
+            _ => ""
+        };
         _layout["Main"].Update(new Rows(_resultTable, new Markup(Markup.Escape(statusText))));
     }
 

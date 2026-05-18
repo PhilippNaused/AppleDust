@@ -112,12 +112,4 @@ internal static class Utils
             type.IsGenericType &&
             type.FullName?.StartsWith("System.ValueTuple`", StringComparison.Ordinal) == true;
     }
-
-#if !NET10_0_OR_GREATER
-    public static IEnumerable<TSource> Shuffle<TSource>(this IEnumerable<TSource> source)
-    {
-        var rnd = new Random();
-        return source.OrderBy(_ => rnd.Next());
-    }
-#endif
 }
