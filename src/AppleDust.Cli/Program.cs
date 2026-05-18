@@ -1,5 +1,4 @@
 using AppleDust.Cli;
-using AppleDust.Shared;
 using Spectre.Console;
 
 const int maxRounds = 200;
@@ -17,12 +16,9 @@ try
     var paths = args.Select(Path.GetFullPath).ToList();
     using var collection = await BenchmarkCollection.CreateAsync(paths, cts.Token);
     var benchmarks = collection.Benchmarks;
-    await Utils.JitDelay(cts.Token);
 
     var status = new ResultTable(benchmarks);
-    status.Refresh();
     var dash = new Dashboard(status, collection);
-    dash.Update();
 
     async Task MainLoop()
     {
@@ -40,12 +36,11 @@ try
                 {
                     status.SetBorderColor(Color.Red);
                     // high CPU usage, wait for it to cool down.
-                    await Task.Delay(1_000, cts.Token);
+                    await collection.CoolDown(cts.Token);
                 }
                 status.SetBorderColor(Color.Default);
 
                 await bench.GetSampleAsync();
-                //status.Refresh();
 
                 if (Console.KeyAvailable)
                 {
@@ -56,7 +51,6 @@ try
                         {
                             b.Reset();
                         }
-                        //status.Refresh();
                         goto start;
                     }
                 }
@@ -69,11 +63,11 @@ try
         }
     }
 
-    var main = MainLoop();
+    var mainLoop = MainLoop();
 
     await AnsiConsole.Live(dash).StartAsync(async ctx =>
     {
-        while (!main.IsCompleted)
+        while (!mainLoop.IsCompleted)
         {
             status.Refresh();
             dash.Update();
@@ -82,7 +76,7 @@ try
         }
     });
 
-    await main;
+    await mainLoop;
 }
 catch (OperationCanceledException)
 {

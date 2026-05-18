@@ -107,5 +107,4 @@ internal sealed class BenchmarkCollection : IReadOnlyCollection<Benchmark>, IDis
 
     /// <inheritdoc />
     IEnumerator IEnumerable.GetEnumerator() => _benchmarks.GetEnumerator();
-
 }
