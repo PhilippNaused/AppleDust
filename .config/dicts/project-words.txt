@@ -2,6 +2,7 @@ accessibilities
 buildtransitive
 cctor
 contentfiles
+Cooldown
 COREHOST
 Coverable
 datacollector

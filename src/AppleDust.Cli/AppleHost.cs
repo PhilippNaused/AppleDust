@@ -5,38 +5,39 @@ namespace AppleDust.Cli;
 internal sealed class AppleHost : IDisposable
 {
     private readonly string _path;
-    private readonly List<Benchmark> _benchmarks = [];
     private readonly CancellationToken _cancellationToken;
     private RpcProcess _process;
     private RpcCaller _caller;
-    public IReadOnlyList<Benchmark> Benchmarks => _benchmarks;
+    public bool Restarting { get; private set; }
 
     private AppleHost(string path, CancellationToken cancellationToken)
     {
         _path = path;
         _cancellationToken = cancellationToken;
-        RestartAsync();
+        Restart();
     }
 
     [MemberNotNull(nameof(_process), nameof(_caller))]
-    public void RestartAsync()
+    public void Restart()
     {
+        Restarting = true;
         _caller?.Dispose();
         _process?.Dispose();
         _process = new RpcProcess(_path, _cancellationToken);
         _caller = new RpcCaller(_process.Pipe, _cancellationToken);
+        Restarting = false;
     }
 
-    public static async Task<AppleHost> CreateAsync(string path, CancellationToken cancellationToken)
+    public static AppleHost Create(HostParameters config, CancellationToken cancellationToken)
     {
-        var host = new AppleHost(path, cancellationToken);
+        return new AppleHost(config.Path, cancellationToken);
+    }
+
+    public static async Task<List<Benchmark>> GetBenchmarksAsync(HostParameters config, CancellationToken cancellationToken)
+    {
+        using var host = Create(config, cancellationToken);
         var names = await host._caller.GetNames();
-        var list = host._benchmarks;
-        foreach (var name in names)
-        {
-            var bench = new Benchmark(host, name);
-            list.Add(bench);
-        }
+        var list = new List<Benchmark>(names.Select(name => new Benchmark(config, name, cancellationToken)));
         var overheadBench = list.Single(b => b.IsOverhead);
         _ = list.Remove(overheadBench);
         list.Insert(0, overheadBench);
@@ -44,7 +45,7 @@ internal sealed class AppleHost : IDisposable
         {
             benchmark.Overhead = overheadBench;
         }
-        return host;
+        return list;
     }
 
     public void Dispose()
@@ -53,9 +54,7 @@ internal sealed class AppleHost : IDisposable
         _process.Dispose();
     }
 
-    public Benchmark GetBenchmark(string name) => Benchmarks.Single(b => b.Name == name);
-
     public Task<(long nanos, long bytes)> GetSample(string name, int i) => _caller.GetSample(name, i);
 
-    public Task<(string Name, int Iterations)[]> WarmUp(int targetMs) => _caller.WarmUp(targetMs);
+    public Task<int> WarmUp(string name, int targetMs) => _caller.WarmUp(name, targetMs);
 }

@@ -8,21 +8,21 @@ namespace AppleDust.Cli;
 
 internal class Dashboard : IRenderable
 {
-    private readonly Layout layout;
+    private readonly Layout _layout;
+    private readonly DateTime _startTime = DateTime.Now;
+    private readonly ResultTable _resultTable;
+    private readonly BenchmarkCollection _collection;
 
-    public Dashboard(IRenderable mainContent)
+    public Dashboard(ResultTable resultTable, BenchmarkCollection collection)
     {
-        layout = new Layout("Root")
+        _layout = new Layout("Root")
             .SplitRows(
                 // new Layout("Header").Size(3),
                 new Layout("Main"),
                 new Layout("Footer").Size(3));
 
-        // layout["Header"].Update(
-        //     new Panel("[bold red]AppleDust Dashboard[/]")
-        //         .BorderColor(Color.Red));
-
-        layout["Main"].Update(mainContent);
+        _resultTable = resultTable;
+        _collection = collection;
 
         Update();
     }
@@ -31,22 +31,31 @@ internal class Dashboard : IRenderable
     {
         var cpu = Utils2.GetTotalCpuUsage();
         CpuQuality = GetCpuQuality(cpu);
-        layout["Footer"].Update(
+        _layout["Footer"].Update(
             new Panel(new Columns(
                 new Markup($"[dim]Runtime: {ToString(GetUptime())}[/]"),
                 new Markup($"CPU: {cpu:P1}", Utils2.GetColor(CpuQuality))
                 ))
                 .BorderColor(Color.Grey));
+
+        string statusText = _collection.State switch
+        {
+            BenchmarkCollection.StateEnum.Warmup => $"Warmup: [{new ProgressBar(_collection.WarmupProgress ?? 0) { Width = 25 }}]",
+            BenchmarkCollection.StateEnum.Cooldown => "Cooldown...",
+            BenchmarkCollection.StateEnum.Sampling => "Sampling...",
+            BenchmarkCollection.StateEnum.Idle => "Idle...",
+            _ => ""
+        };
+        _layout["Main"].Update(new Rows(_resultTable, new Markup(Markup.Escape(statusText))));
     }
 
     public int CpuQuality { get; private set; }
 
-    Measurement IRenderable.Measure(RenderOptions options, int maxWidth) => ((IRenderable)layout).Measure(options, maxWidth);
+    Measurement IRenderable.Measure(RenderOptions options, int maxWidth) => ((IRenderable)_layout).Measure(options, maxWidth);
 
-    IEnumerable<Segment> IRenderable.Render(RenderOptions options, int maxWidth) => ((IRenderable)layout).Render(options, maxWidth);
+    IEnumerable<Segment> IRenderable.Render(RenderOptions options, int maxWidth) => ((IRenderable)_layout).Render(options, maxWidth);
 
-    private static readonly DateTime StartTime = DateTime.Now;
-    private static TimeSpan GetUptime() => DateTime.Now - StartTime;
+    private TimeSpan GetUptime() => DateTime.Now - _startTime;
 
     private static string ToString(TimeSpan time)
     {

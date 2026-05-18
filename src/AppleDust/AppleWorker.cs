@@ -41,30 +41,18 @@ internal sealed class AppleWorker : IAppleRpc
     private Benchmark Get(string name) => _benchmarks.Single(b => b.Name == name);
 
     [MethodImpl(Utils.AggressiveOptimization)]
-    public Task<(string, int)[]> WarmUp(int targetMs)
+    public Task<int> WarmUp(string name, int targetMs)
     {
+        var benchmark = Get(name);
+        benchmark.Pilot(targetMs);
+
 #pragma warning disable CA1849 // Call async methods when in an async method
-        // const int warmUpCount = 5;
-        // var parallel = Environment.ProcessorCount / 4;
-        //parallel = 1;
-        // parallel = Math.Max(1, parallel);
-        var iterations = _benchmarks.Select(b => b.Pilot(targetMs)).ToArray();
-        // Thread.Sleep(Utils.JitDelayMs);
-        // _ = Parallel.For(0, _benchmarks.Count, new ParallelOptions { MaxDegreeOfParallelism = parallel }, i =>
-        // {
-        //     for (int j = 0; j < warmUpCount; j++)
-        //     {
-        //         _ = _benchmarks[i].Measure(iterations[i]);
-        //     }
-        // });
         Thread.Sleep(Utils.JitDelayMs);
-        for (int i = 0; i < _benchmarks.Count; i++)
-        {
-            iterations[i] = _benchmarks[i].Pilot(targetMs, iterations[i]); // refine the pilot result after warming up
-        }
-        var result = _benchmarks.Select((b, i) => (b.Name, iterations[i])).ToArray();
-        return Task.FromResult(result);
 #pragma warning restore CA1849 // Call async methods when in an async method
+
+        benchmark.Pilot(targetMs);
+
+        return Task.FromResult(benchmark.Iterations);
     }
 
     public Task<(long Nanos, long Bytes)> GetSample(string name, int iterations) => Task.FromResult(Get(name).Measure(iterations));

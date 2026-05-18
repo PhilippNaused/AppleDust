@@ -17,7 +17,7 @@ internal static class Utils
 
     public const MethodImplOptions AggressiveOptimization = (MethodImplOptions)0x0200;
 
-    public static Task Delay(CancellationToken token = default) => Task.Delay(JitDelayMs, token); // Gives JIT time to optimize the code.
+    public static Task JitDelay(CancellationToken token = default) => Task.Delay(JitDelayMs, token); // Gives JIT time to optimize the code.
 
     private static string Escape(string text)
     {
