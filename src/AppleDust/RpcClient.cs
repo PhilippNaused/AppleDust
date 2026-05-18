@@ -42,6 +42,7 @@ internal sealed class RpcClient<T>(T instance, IDuplexPipe pipe)
 #pragma warning disable CA1031 // Do not catch general exception types
         try
         {
+            await Utils.JitDelay(cancellationToken);
             await RunInnerAsync(cancellationToken);
         }
         catch (Exception e)

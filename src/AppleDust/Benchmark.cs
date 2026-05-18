@@ -27,6 +27,7 @@ internal sealed class Benchmark<T>(Func<T> func, string name) : Benchmark(name)
 internal abstract class Benchmark(string name)
 {
     public string Name { get; } = name;
+    public int Iterations { get; set; } = Utils.MinIterations;
 
     [MethodImpl(Utils.AggressiveOptimization | MethodImplOptions.NoInlining)]
     protected abstract void Run(int iterations);
@@ -46,18 +47,17 @@ internal abstract class Benchmark(string name)
     }
 
     [MethodImpl(Utils.AggressiveOptimization)]
-    public int Pilot(int targetMs, int iterations = Utils.MinIterations)
+    public void Pilot(int targetMs)
     {
         long targetNs = targetMs * 1_000_000L;
 
         long timeNs;
-        while ((timeNs = Measure(iterations).Nanos) < targetNs * 1.1)
+        while ((timeNs = Measure(Iterations).Nanos) < targetNs * 1.1)
         {
-            iterations *= 2;
+            Iterations *= 2;
         }
 
-        iterations = (int)(iterations * (targetNs / (double)timeNs));
-        iterations = Math.Max(iterations, Utils.MinIterations);
-        return iterations;
+        Iterations = (int)(Iterations * (targetNs / (double)timeNs));
+        Iterations = Math.Max(Iterations, Utils.MinIterations);
     }
 }

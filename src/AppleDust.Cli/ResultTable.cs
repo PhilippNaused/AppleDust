@@ -5,13 +5,13 @@ using Spectre.Console.Rendering;
 
 namespace AppleDust.Cli;
 
-internal sealed class StatusDisplay : IRenderable
+internal sealed class ResultTable : IRenderable
 {
     private readonly Table _table;
     private readonly IReadOnlyList<Benchmark> _benchmarks;
     private readonly Lock _lock = new();
 
-    public StatusDisplay(IReadOnlyList<Benchmark> benchmarks)
+    public ResultTable(IReadOnlyList<Benchmark> benchmarks)
     {
         _benchmarks = benchmarks;
         var headers = new TableRow().GetColumns().Select(c => c.Name).ToArray();
@@ -62,7 +62,7 @@ internal sealed class StatusDisplay : IRenderable
             {
                 return NA.Justify(Justification);
             }
-            return new Markup(func(Value), Style).Justify(Justification);
+            return new Markup(Markup.Escape(func(Value)), Style).Justify(Justification);
         }
     }
 
@@ -82,6 +82,7 @@ internal sealed class StatusDisplay : IRenderable
         public readonly NumberColumn Samples = new("Samples", "N0");
         // public readonly NumberColumn Iterations = new("Iterations", "N0");
         public readonly NumberColumn Outliers = new("Outliers", "N0");
+        public readonly StringColumn Status = new("Status") { Justification = Justify.Left };
 
         private static readonly FieldInfo[] columnFields = typeof(TableRow)
             .GetFields()
@@ -131,6 +132,7 @@ internal sealed class StatusDisplay : IRenderable
             row.Samples.Value = stat.Samples.Length;
             // row.Iterations.Value = bench.Iterations;
             row.Outliers.Value = bench.Outliers;
+            row.Status.Value = bench.GetStatus();
 
             var samples = stat.Samples;
 

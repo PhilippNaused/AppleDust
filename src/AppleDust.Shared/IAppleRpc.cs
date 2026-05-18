@@ -4,7 +4,7 @@ namespace AppleDust.Shared;
 
 internal interface IAppleRpc : IDisposable
 {
-    Task<(string Name, int Iterations)[]> WarmUp(int targetMs);
+    Task<int> WarmUp(string name, int targetMs);
     Task<(long Nanos, long Bytes)> GetSample(string name, int iterations);
     Task<string[]> GetNames();
 }

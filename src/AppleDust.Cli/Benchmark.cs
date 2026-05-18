@@ -4,7 +4,7 @@ using Perfolizer.Mathematics.OutlierDetection;
 
 namespace AppleDust.Cli;
 
-internal sealed class Benchmark(AppleHost host, string name)
+internal sealed class Benchmark(HostParameters hostConfig, string name, CancellationToken cancellationToken) : IDisposable
 {
     private readonly List<double> _samplesRaw = new(50);
     private readonly List<double> _samplesGcRaw = new(50);
@@ -18,8 +18,34 @@ internal sealed class Benchmark(AppleHost host, string name)
     public int Outliers { get; private set; }
     public Benchmark? Overhead { get; set; }
     public Benchmark? Baseline { get; set; }
-    public AppleHost Host => host;
+    public AppleHost Host { get; } = AppleHost.Create(hostConfig, cancellationToken);
+
     public int SampleCount => Stats.Samples.Length;
+
+    private int _state = 0; // TODO: use enum for state.
+
+    public async Task WarmUp()
+    {
+        _state = 1;
+        Iterations = await Host.WarmUp(Name, Utils2.TargetMs);
+        _state = 0;
+    }
+
+    public string GetStatus()
+    {
+        if (Host.Restarting)
+        {
+            return "Restarting";
+        }
+        return _state switch
+        {
+            0 => "Idle",
+            1 => $"Warming up",
+            2 => "Sampling",
+            _ => "Unknown"
+        };
+    }
+
     private ImmutableArray<double> Sanitize(List<double> samples, double? overhead)
     {
         var sanitized = samples.Where(double.IsFinite);
@@ -32,7 +58,8 @@ internal sealed class Benchmark(AppleHost host, string name)
 
     public async Task GetSampleAsync()
     {
-        (long nanos, long bytes) = await host.GetSample(name, Iterations);
+        _state = 2;
+        (long nanos, long bytes) = await Host.GetSample(name, Iterations);
         var timeSample = (double)nanos / Iterations;
         var memorySample = (double)bytes / Iterations;
         if (bytes < 0)
@@ -45,6 +72,7 @@ internal sealed class Benchmark(AppleHost host, string name)
         _samplesGcRaw.Add(memorySample);
         RemoveOutliers();
         UpdateStats();
+        _state = 0;
     }
 
     private void UpdateStats()
@@ -88,5 +116,11 @@ internal sealed class Benchmark(AppleHost host, string name)
     public override string ToString()
     {
         return $"Benchmark: {Name}, Iterations: {Iterations}, Stats: {Stats}, GcStats: {GcStats}";
+    }
+
+    /// <inheritdoc />
+    public void Dispose()
+    {
+        Host.Dispose();
     }
 }

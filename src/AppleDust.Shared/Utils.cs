@@ -17,7 +17,7 @@ internal static class Utils
 
     public const MethodImplOptions AggressiveOptimization = (MethodImplOptions)0x0200;
 
-    public static Task Delay(CancellationToken token = default) => Task.Delay(JitDelayMs, token); // Gives JIT time to optimize the code.
+    public static Task JitDelay(CancellationToken token = default) => Task.Delay(JitDelayMs, token); // Gives JIT time to optimize the code.
 
     private static string Escape(string text)
     {
@@ -112,4 +112,12 @@ internal static class Utils
             type.IsGenericType &&
             type.FullName?.StartsWith("System.ValueTuple`", StringComparison.Ordinal) == true;
     }
+
+#if !NET10_0_OR_GREATER
+    public static IEnumerable<TSource> Shuffle<TSource>(this IEnumerable<TSource> source)
+    {
+        var rnd = new Random();
+        return source.OrderBy(_ => rnd.Next());
+    }
+#endif
 }
