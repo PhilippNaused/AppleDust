@@ -17,8 +17,9 @@ try
     using var collection = await BenchmarkCollection.CreateAsync(paths, cts.Token);
     var benchmarks = collection.Benchmarks;
 
+    using var cpuMonitor = new CpuMonitor(cts.Token);
     var status = new ResultTable(benchmarks);
-    var dash = new Dashboard(status, collection);
+    var dash = new Dashboard(status, collection, cpuMonitor);
 
     async Task MainLoop()
     {
@@ -32,13 +33,13 @@ try
 
             foreach (var bench in benches.Shuffle()) // shuffle benchmarks to avoid bias.
             {
-                while (dash.CpuQuality < 0)
+                while (cpuMonitor.CpuQuality < 0)
                 {
-                    status.SetBorderColor(Color.Red);
+                    status.SetBorderStyle(Styles.Red);
                     // high CPU usage, wait for it to cool down.
                     await collection.CoolDown(cts.Token);
                 }
-                status.SetBorderColor(Color.Default);
+                status.SetBorderStyle(Style.Plain);
                 collection.State = BenchmarkCollection.StateEnum.Sampling;
                 await bench.GetSampleAsync();
 
@@ -69,7 +70,6 @@ try
     {
         while (!mainLoop.IsCompleted)
         {
-            status.Refresh();
             dash.Update();
             ctx.Refresh();
             await Task.Delay(100, cts.Token);

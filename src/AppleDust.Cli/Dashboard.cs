@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using Spectre.Console;
 using Spectre.Console.Rendering;
 
@@ -12,8 +11,9 @@ internal class Dashboard : IRenderable
     private readonly DateTime _startTime = DateTime.Now;
     private readonly ResultTable _resultTable;
     private readonly BenchmarkCollection _collection;
+    private readonly CpuMonitor _cpuMonitor;
 
-    public Dashboard(ResultTable resultTable, BenchmarkCollection collection)
+    public Dashboard(ResultTable resultTable, BenchmarkCollection collection, CpuMonitor cpuMonitor)
     {
         _layout = new Layout("Root")
             .SplitRows(
@@ -23,14 +23,16 @@ internal class Dashboard : IRenderable
 
         _resultTable = resultTable;
         _collection = collection;
+        _cpuMonitor = cpuMonitor;
 
         Update();
     }
 
     public void Update()
     {
-        var cpu = Utils2.GetTotalCpuUsage();
-        CpuQuality = GetCpuQuality(cpu);
+        _resultTable.Refresh();
+        var cpu = _cpuMonitor.CpuUsage;
+        CpuQuality = _cpuMonitor.CpuQuality;
         _layout["Footer"].Update(
             new Panel(new Columns(
                 new Markup($"[dim]Runtime: {ToString(GetUptime())}[/]"),
@@ -46,7 +48,14 @@ internal class Dashboard : IRenderable
             BenchmarkCollection.StateEnum.Idle => "Idle...",
             _ => ""
         };
-        _layout["Main"].Update(new Rows(_resultTable, new Markup(Markup.Escape(statusText))));
+        const string helpText = """
+        Press [bold]Delete[/] to reset benchmarks.
+        """;
+        _layout["Main"].Update(new Rows(
+            _resultTable,
+            Markup.FromInterpolated($"{statusText}"),
+            new Markup(helpText)
+            ));
     }
 
     public int CpuQuality { get; private set; }
@@ -60,34 +69,5 @@ internal class Dashboard : IRenderable
     private static string ToString(TimeSpan time)
     {
         return $"{time.Hours:N0}h {time.Minutes:00}m {time.Seconds:00}s";
-    }
-
-    private static int GetCpuQuality(double cpuUsage)
-    {
-        if (double.IsNaN(cpuUsage))
-        {
-            Debug.Assert(!OperatingSystem.IsWindows());
-            return 1;
-        }
-        // 2 thread of work.
-        var target = 2d / Environment.ProcessorCount;
-        target = Math.Max(target, 0.1); // at least 10% CPU usage is expected.
-        if (cpuUsage < target)
-        {
-            return 2; // great
-        }
-        if (cpuUsage < target * 1.5)
-        {
-            return 1; // good
-        }
-        if (cpuUsage < target * 2)
-        {
-            return 0; // meh
-        }
-        if (cpuUsage < target * 2.5)
-        {
-            return -1; // bad
-        }
-        return -2; // terrible
     }
 }

@@ -21,9 +21,9 @@ internal sealed class ResultTable : IRenderable
         .ShowRowSeparators();
     }
 
-    public void SetBorderColor(Color color)
+    public void SetBorderStyle(Style style)
     {
-        _ = _table.BorderColor(color);
+        _table.BorderStyle = style;
     }
 
     private abstract class TableColumn(string name)

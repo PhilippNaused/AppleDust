@@ -1,5 +1,4 @@
 using System.Collections.Immutable;
-using System.Diagnostics;
 using Perfolizer.Mathematics.Distributions.ContinuousDistributions;
 using Pragmastat;
 using Pragmastat.Exceptions;
@@ -130,22 +129,6 @@ internal static class Utils2
     public static Task WithStatus(this Task task, string status) => AnsiConsole.Status().StartAsync(status, async _ => await task);
     public static Task<T> WithStatus<T>(this Task<T> task, string status) => AnsiConsole.Status().StartAsync(status, async _ => await task);
     public static Task<T> WithStatus<T>(this ValueTask<T> task, string status) => AnsiConsole.Status().StartAsync(status, async _ => await task);
-
-    public static double GetTotalCpuUsage()
-    {
-        if (!OperatingSystem.IsWindows())
-            return double.NaN;
-        _cpuCounter ??= new PerformanceCounter("Processor", "% Processor Time", "_Total");
-        if (_cpuSamples.Count == _cpuSamples.Capacity)
-        {
-            _ = _cpuSamples.Dequeue();
-        }
-        _cpuSamples.Enqueue(_cpuCounter.NextValue() / 100);
-        return _cpuSamples.Average();
-    }
-
-    private static readonly Queue<double> _cpuSamples = new(10);
-    private static PerformanceCounter? _cpuCounter;
 
     public static Style GetColor(int index)
     {
