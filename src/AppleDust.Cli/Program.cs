@@ -65,11 +65,15 @@ try
 
     await AnsiConsole.Live(dash).StartAsync(async ctx =>
     {
+        using var timer = new PeriodicTimer(TimeSpan.FromMilliseconds(100));
         while (!mainLoop.IsCompleted)
         {
             dash.Update();
             ctx.Refresh();
-            await Task.Delay(100, cts.Token);
+            if (!await timer.WaitForNextTickAsync(cts.Token))
+            {
+                break;
+            }
 
             while (Console.KeyAvailable)
             {
