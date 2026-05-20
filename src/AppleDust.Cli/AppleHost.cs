@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 
 namespace AppleDust.Cli;
@@ -6,8 +7,8 @@ internal sealed class AppleHost : IDisposable
 {
     private readonly string _path;
     private readonly CancellationToken _cancellationToken;
-    private RpcProcess _process;
-    private RpcCaller _caller;
+    private RpcProcess? _process;
+    private RpcCaller? _caller;
     public bool Restarting { get; private set; }
 
     private AppleHost(string path, CancellationToken cancellationToken)
@@ -33,28 +34,28 @@ internal sealed class AppleHost : IDisposable
         return new AppleHost(config.Path, cancellationToken);
     }
 
-    public static async Task<List<Benchmark>> GetBenchmarksAsync(HostParameters config, CancellationToken cancellationToken)
+    public static async Task<List<string>> GetBenchmarksAsync(string path, CancellationToken cancellationToken)
     {
-        using var host = Create(config, cancellationToken);
+        using var host = new AppleHost(path, cancellationToken);
+        Debug.Assert(host._caller is not null);
         var names = await host._caller.GetNames();
-        var list = new List<Benchmark>(names.Select(name => new Benchmark(config, name, cancellationToken)));
-        var overheadBench = list.Single(b => b.IsOverhead);
-        _ = list.Remove(overheadBench);
-        list.Insert(0, overheadBench);
-        foreach (var benchmark in list)
-        {
-            benchmark.Overhead = overheadBench;
-        }
-        return list;
+        return names.ToList();
+    }
+
+    public void Shutdown()
+    {
+        _caller?.Dispose();
+        _caller = null;
+        _process?.Dispose();
+        _process = null;
     }
 
     public void Dispose()
     {
-        _caller.Dispose();
-        _process.Dispose();
+        Shutdown();
     }
 
-    public Task<(long nanos, long bytes)> GetSample(string name, int i) => _caller.GetSample(name, i);
+    public Task<(long nanos, long bytes)> GetSample(string name, int i) => _caller!.GetSample(name, i);
 
-    public Task<int> WarmUp(string name, int targetMs) => _caller.WarmUp(name, targetMs);
+    public Task<int> WarmUp(string name, int targetMs) => _caller!.WarmUp(name, targetMs);
 }

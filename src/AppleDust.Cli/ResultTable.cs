@@ -11,9 +11,9 @@ internal sealed class ResultTable : IRenderable
     private readonly IReadOnlyList<Benchmark> _benchmarks;
     private readonly Lock _lock = new();
 
-    public ResultTable(IReadOnlyList<Benchmark> benchmarks)
+    public ResultTable(BenchmarkCollection benchmarks)
     {
-        _benchmarks = benchmarks;
+        _benchmarks = benchmarks.Benchmarks;
         var headers = new TableRow().GetColumns().Select(c => c.Name).ToArray();
         _table = new Table()
         .Title("Benchmark Results")

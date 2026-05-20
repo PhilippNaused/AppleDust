@@ -13,19 +13,23 @@ var config = new Config { ColdStart = false };
 try
 {
     var paths = args.Select(Path.GetFullPath).ToList();
-    using var collection = await BenchmarkCollection.CreateAsync(paths, cts.Token);
+    var benchmarkNames = await AppleHost.GetBenchmarksAsync(paths.First(), cts.Token).WithStatus("Initializing...");
+    using var collection = BenchmarkCollection.Create(paths, benchmarkNames, cts.Token);
     var benchmarks = collection.Benchmarks;
 
     using var cpuMonitor = new CpuMonitor(cts.Token);
-    var status = new ResultTable(benchmarks);
+    var status = new ResultTable(collection);
     var dash = new Dashboard(status, collection, cpuMonitor);
 
     using var resetEvent = new AutoResetEvent(false);
 
     async Task MainLoop()
     {
-        await collection.WarmUp();
-        await collection.CoolDown(cts.Token);
+        if (!config.ColdStart)
+        {
+            await collection.WarmUp();
+            await collection.CoolDown(cts.Token);
+        }
     start:
         for (int i = 0; !cts.IsCancellationRequested; i++)
         {
@@ -42,7 +46,7 @@ try
                 }
                 status.SetBorderStyle(Style.Plain);
                 collection.State = BenchmarkCollection.StateEnum.Sampling;
-                await bench.GetSampleAsync();
+                await bench.GetSampleAsync(config.ColdStart);
 
                 if (resetEvent.WaitOne(0))
                 {

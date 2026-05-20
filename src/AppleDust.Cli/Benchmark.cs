@@ -59,19 +59,31 @@ internal sealed class Benchmark(HostParameters hostConfig, string name, Cancella
         return [.. sanitized];
     }
 
-    public async Task GetSampleAsync()
+    public async Task GetSampleAsync(bool coldStart = false)
     {
         using var _ = await LockAsync();
+        if (coldStart)
+        {
+            Iterations = 1;
+            Host.Restart();
+        }
         _state = 2;
         (long nanos, long bytes) = await Host.GetSample(name, Iterations);
+        if (coldStart)
+        {
+            Host.Shutdown();
+        }
         var timeSample = (double)nanos / Iterations;
         var memorySample = (double)bytes / Iterations;
         if (bytes < 0)
         {
             memorySample = double.NaN;
         }
-        Iterations = (int)(Utils2.TargetNs / timeSample);
-        Iterations = Math.Max(Iterations, Utils.MinIterations);
+        if (!coldStart)
+        {
+            Iterations = (int)(Utils2.TargetNs / timeSample);
+            Iterations = Math.Max(Iterations, Utils.MinIterations);
+        }
         _samplesRaw.Add(timeSample);
         _samplesGcRaw.Add(memorySample);
         RemoveOutliers();

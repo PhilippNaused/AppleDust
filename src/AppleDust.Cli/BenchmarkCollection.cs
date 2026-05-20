@@ -35,15 +35,26 @@ internal sealed class BenchmarkCollection : IReadOnlyCollection<Benchmark>, IDis
         _parallelOptions = new ParallelOptions { MaxDegreeOfParallelism = maxParallel };
     }
 
-    public static async Task<BenchmarkCollection> CreateAsync(IReadOnlyList<string> paths, CancellationToken cancellationToken)
+    public static BenchmarkCollection Create(IReadOnlyList<string> paths, IReadOnlyList<string> names, CancellationToken cancellationToken)
     {
         int mode = paths.Count > 1 ? 1 : 0;
         var hosts = new List<List<Benchmark>>(paths.Count);
         var benchmarkList = new List<Benchmark>(paths.Count * 3); // every host should have at least 3 benchmarks (overhead, baseline, actual...)
         foreach (var path in paths)
         {
-            var benchmarks = await AppleHost.GetBenchmarksAsync(new HostParameters(path), cancellationToken);
+            var hostConfig = new HostParameters(path);
+            var benchmarks = names.Select(name => new Benchmark(hostConfig, name, cancellationToken)).ToList();
+
+            var overheadBench = benchmarks.Single(b => b.IsOverhead);
+            _ = benchmarks.Remove(overheadBench);
+            benchmarks.Insert(0, overheadBench);
+            foreach (var benchmark in benchmarks)
+            {
+                benchmark.Overhead = overheadBench;
+            }
+
             hosts.Add(benchmarks);
+            benchmarkList.AddRange(benchmarks);
 
             if (mode == 0)
             {
@@ -56,7 +67,6 @@ internal sealed class BenchmarkCollection : IReadOnlyCollection<Benchmark>, IDis
                     benchmark.Baseline = baseline;
                 }
             }
-            benchmarkList.AddRange(benchmarks);
         }
         if (mode == 1)
         {
