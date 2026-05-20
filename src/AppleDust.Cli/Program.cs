@@ -1,15 +1,14 @@
 using AppleDust.Cli;
 using Spectre.Console;
 
-const int maxRounds = 200;
-const int restartCount = 5;
-
 using var cts = new CancellationTokenSource();
 Console.CancelKeyPress += (s, e) =>
 {
     e.Cancel = true;
     cts.Cancel();
 };
+
+var config = new Config { ColdStart = false };
 
 try
 {
@@ -26,7 +25,7 @@ try
         await collection.WarmUp();
         await collection.CoolDown(cts.Token);
     start:
-        for (int i = 0; i < maxRounds; i++)
+        for (int i = 0; !cts.IsCancellationRequested; i++)
         {
             // Add benchmarks that have discarded samples a second time.
             List<Benchmark> benches = [.. benchmarks, .. benchmarks.Where(b => b.SampleCount < i)];
@@ -56,7 +55,7 @@ try
                     }
                 }
             }
-            if (i % restartCount == restartCount - 1)
+            if (!config.ColdStart && i % config.RestartCount == config.RestartCount - 1)
             {
                 await collection.RestartAsync(true);
                 await collection.CoolDown(cts.Token);
