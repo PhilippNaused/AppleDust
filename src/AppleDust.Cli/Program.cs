@@ -13,7 +13,7 @@ var config = new Config { ColdStart = false };
 try
 {
     var paths = args.Select(Path.GetFullPath).ToList();
-    var benchmarkNames = await AppleHost.GetBenchmarksAsync(paths.First(), cts.Token).WithStatus("Initializing...");
+    var benchmarkNames = await AppleHost.GetBenchmarksAsync(new HostParameters(paths.First()), cts.Token).WithStatus("Initializing...");
     using var collection = BenchmarkCollection.Create(paths, benchmarkNames, cts.Token);
     var benchmarks = collection.Benchmarks;
 

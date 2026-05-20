@@ -9,31 +9,39 @@ internal sealed class RpcProcess : IDisposable
     private readonly DuplexServer _pipe;
     public IDuplexPipe Pipe => _pipe;
 
-    public RpcProcess(string path, CancellationToken cancellationToken)
+    public RpcProcess(HostParameters parameters, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
         _pipe = DuplexServer.Create(HandleInheritability.Inheritable);
         var handles = _pipe.GetClientHandles();
-        var startInfo = new ProcessStartInfo(path)
+        var startInfo = new ProcessStartInfo(parameters.Path)
         {
             UseShellExecute = false,
             ArgumentList = { handles.OutHandle, handles.InHandle },
-            CreateNoWindow = false,
-            EnvironmentVariables =
-            {
-                ["DOTNET_EnableDiagnostics"] = "0",
-                ["COREHOST_EnableDiagnostics"] = "0",
-                ["DOTNET_gcConcurrent"] = "0",
-                // ["DOTNET_TieredCompilation"] = "0",
-                // ["DOTNET_TC_QuickJit"] = "0",
-                // ["DOTNET_TieredPGO"] = "0",
-            },
+            CreateNoWindow = false
         };
+        if (parameters.DisableConcurrentGc)
+        {
+            startInfo.EnvironmentVariables["DOTNET_gcConcurrent"] = "0";
+        }
+        if (parameters.DisableTieredJit)
+        {
+            startInfo.EnvironmentVariables["DOTNET_TieredCompilation"] = "0";
+        }
+        if (parameters.DisablePgo)
+        {
+            startInfo.EnvironmentVariables["DOTNET_TieredPGO"] = "0";
+        }
+        if (parameters.DisableDiagnostics)
+        {
+            startInfo.EnvironmentVariables["DOTNET_EnableDiagnostics"] = "0";
+            startInfo.EnvironmentVariables["COREHOST_EnableDiagnostics"] = "0";
+        }
         _process = Process.Start(startInfo)!;
         if (_process is null)
         {
             Dispose();
-            throw new InvalidOperationException($"Failed to start process: {path}");
+            throw new InvalidOperationException($"Failed to start process: '{parameters.Path}'");
         }
         _pipe.DisposeLocalCopyOfClientHandles();
     }

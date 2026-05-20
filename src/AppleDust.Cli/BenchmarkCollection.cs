@@ -42,8 +42,8 @@ internal sealed class BenchmarkCollection : IReadOnlyCollection<Benchmark>, IDis
         var benchmarkList = new List<Benchmark>(paths.Count * 3); // every host should have at least 3 benchmarks (overhead, baseline, actual...)
         foreach (var path in paths)
         {
-            var hostConfig = new HostParameters(path);
-            var benchmarks = names.Select(name => new Benchmark(hostConfig, name, cancellationToken)).ToList();
+            var hostParameters = new HostParameters(path);
+            var benchmarks = names.Select(name => new Benchmark(hostParameters, name, cancellationToken)).ToList();
 
             var overheadBench = benchmarks.Single(b => b.IsOverhead);
             _ = benchmarks.Remove(overheadBench);
