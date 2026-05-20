@@ -22,6 +22,7 @@ public sealed class BenchmarkBuilder
 
     public Task RunAsync(string[] args)
     {
+        _ = ThreadPool.SetMaxThreads(1, 1); // ensure benchmarks run sequentially to avoid interference. This also makes the results more stable, especially for GC stats.
         if (_benchmarks.All(b => b.Name != Utils.OverheadBenchmarkName))
         {
             _ = UseOverhead(Nothing);

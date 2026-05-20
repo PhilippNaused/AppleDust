@@ -35,7 +35,6 @@ internal abstract class Benchmark(string name)
     [MethodImpl(Utils.AggressiveOptimization)]
     internal (long Nanos, long Bytes) Measure(int iterations)
     {
-        GcHelper.ForceGcCollect();
         var sw = new Stopwatch();
         var before = GcHelper.GetAllocatedBytes();
         sw.Start();

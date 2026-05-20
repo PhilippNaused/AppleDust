@@ -77,12 +77,19 @@ internal sealed class ResultTable : IRenderable
         public readonly NumberColumn Disparity = new("Disparity", "P1");
         public readonly NumberColumn PValue = new("p-Value", "G2");
 
-        public readonly NumberColumn Alloc = new("Alloc", "N0");
+        public readonly NumberColumn Alloc = new("Alloc", FormatAlloc);
         public readonly NumberColumn AllocRatio = new("Alloc Ratio", "P2");
         public readonly NumberColumn Samples = new("Samples", "N0");
         // public readonly NumberColumn Iterations = new("Iterations", "N0");
         public readonly NumberColumn Outliers = new("Outliers", "N0");
         public readonly StringColumn Status = new("Status") { Justification = Justify.Left };
+
+        private static string FormatAlloc(double bytes)
+        {
+            if (bytes < 1000)
+                return bytes.ToString("G3"); // Only display decimals for small numbers
+            return bytes.ToString("N0");
+        }
 
         private static readonly FieldInfo[] columnFields = typeof(TableRow)
             .GetFields()
@@ -139,6 +146,8 @@ internal sealed class ResultTable : IRenderable
             if (bench.IsBaseline)
             {
                 row.Ratio.Value = 1;
+                if (bench.IsOverhead)
+                    row.Ratio.Value = double.NaN;
                 row.Ratio.Style = Styles.Dim;
                 row.Name.Style = Styles.Underline;
             }
@@ -172,11 +181,14 @@ internal sealed class ResultTable : IRenderable
                 if (bench.IsBaseline)
                 {
                     row.AllocRatio.Value = 1;
+                    if (bench.IsOverhead)
+                        row.AllocRatio.Value = double.NaN;
                     row.AllocRatio.Style = Styles.Dim;
                 }
                 else
                 {
-                    if (bench.GcStats.Center > 1 && bench.Baseline!.GcStats.Center > 1)
+                    const double allocEps = 0.1; // only compare if both are above 0.1 bytes, to avoid noise in the ratio.
+                    if (bench.GcStats.Center > allocEps && bench.Baseline!.GcStats.Center > allocEps)
                     {
                         var (ratio, shift, disparity, pValue) = Utils2.CompareToBaseline(bench.GcStats.Samples, bench.Baseline!.GcStats.Samples);
                         row.AllocRatio.Value = ratio;

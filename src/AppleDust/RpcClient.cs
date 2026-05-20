@@ -42,7 +42,7 @@ internal sealed class RpcClient<T>(T instance, IDuplexPipe pipe)
 #pragma warning disable CA1031 // Do not catch general exception types
         try
         {
-            await Utils.JitDelay(cancellationToken);
+            GcHelper.ForceGcCollect();
             await RunInnerAsync(cancellationToken);
         }
         catch (Exception e)
@@ -58,7 +58,6 @@ internal sealed class RpcClient<T>(T instance, IDuplexPipe pipe)
                 // ignore
             }
             Console.WriteLine(e);
-            //await Console.Error.WriteLineAsync(e);
         }
 #pragma warning restore CA1031 // Do not catch general exception types
     }
@@ -79,6 +78,7 @@ internal sealed class RpcClient<T>(T instance, IDuplexPipe pipe)
             var method = _methods[command];
             var response = await InvokeAsync(method, parameters);
             await pipe.WriteLineAsync(response, cancellationToken);
+            GcHelper.ForceGcCollect();
         }
     }
 }

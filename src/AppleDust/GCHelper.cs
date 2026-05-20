@@ -32,9 +32,9 @@ internal static class GcHelper
 
     internal static void ForceGcCollect()
     {
-        GC.Collect();
+        GC.Collect(GC.MaxGeneration, GCCollectionMode.Forced, true);
         GC.WaitForPendingFinalizers();
-        GC.Collect();
+        GC.Collect(GC.MaxGeneration, GCCollectionMode.Forced, true);
     }
 }
 
