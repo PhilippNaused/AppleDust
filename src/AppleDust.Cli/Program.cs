@@ -89,7 +89,7 @@ catch (EndOfStreamException) when (cts.IsCancellationRequested)
 catch (RpcException e)
 {
     AnsiConsole.WriteLine(e.Message);
-    AnsiConsole.WriteLine(e.RemoteStackTrace);
+    AnsiConsole.WriteLine(e.RemoteErrorMessage);
 }
 #pragma warning disable CA1031 // Do not catch general exception types
 catch (Exception e)

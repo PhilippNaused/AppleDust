@@ -1,4 +1,3 @@
-using System.Runtime.ExceptionServices;
 using AppleDust.Shared;
 
 namespace AppleDust.Cli;
@@ -10,19 +9,23 @@ internal sealed class RpcCaller(IDuplexPipe pipe, CancellationToken cancellation
         pipe.Dispose();
     }
 
-    private async Task<TRet> InvokeAsync<TRet>(Delegate del, params object[] values) where TRet : notnull
+    private async Task<T> InvokeAsync<T>(Delegate del, params object[] values) where T : notnull
     {
         var name = del.Method.Name;
         var command = string.Join(Utils.CommandSeparator, [name, .. values.Select(Utils.Serialize)]); // e.g. "Add|1|2"
         var response = await SendCommandAsync(command);
+        return ParseResponse<T>(response);
+    }
+
+    internal static T ParseResponse<T>(string response) where T : notnull
+    {
         if (response.StartsWith(Utils.ErrorPrefix))
         {
-            var parts = response[Utils.ErrorPrefix.Length..].Split(Utils.CommandSeparator);
-            var message = Utils.Deserialize<string>(parts[0]);
-            var stackTrace = Utils.Deserialize<string>(parts[1]);
-            throw ExceptionDispatchInfo.SetRemoteStackTrace(new RpcException(message, stackTrace), stackTrace);
+            var error = response[Utils.ErrorPrefix.Length..];
+            error = Utils.Deserialize<string>(error);
+            throw new RpcException("Hosted process threw an exception", error);
         }
-        return Utils.Deserialize<TRet>(response);
+        return Utils.Deserialize<T>(response);
     }
 
     private async Task<string> SendCommandAsync(string command)

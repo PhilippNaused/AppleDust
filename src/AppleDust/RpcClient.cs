@@ -49,9 +49,8 @@ internal sealed class RpcClient<T>(T instance, IDuplexPipe pipe)
         {
             try
             {
-                var message = Utils.Serialize(e.Message);
-                var stackTrace = Utils.Serialize(e.StackTrace ?? "");
-                await pipe.WriteLineAsync($"{Utils.ErrorPrefix}{message}|{stackTrace}", cancellationToken);
+                var error = Utils.Serialize(e.ToString());
+                await pipe.WriteLineAsync($"{Utils.ErrorPrefix}{error}", cancellationToken);
             }
             catch
             {

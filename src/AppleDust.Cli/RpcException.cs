@@ -1,6 +1,6 @@
 namespace AppleDust.Cli;
 
-internal sealed class RpcException(string text, string remoteStackTrace) : Exception(text)
+internal sealed class RpcException(string message, string remoteErrorMessage) : Exception(message)
 {
-    public string RemoteStackTrace => remoteStackTrace;
+    public string RemoteErrorMessage { get; } = remoteErrorMessage;
 }
