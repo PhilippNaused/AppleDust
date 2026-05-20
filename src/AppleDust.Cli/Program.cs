@@ -20,6 +20,8 @@ try
     var status = new ResultTable(benchmarks);
     var dash = new Dashboard(status, collection, cpuMonitor);
 
+    using var resetEvent = new AutoResetEvent(false);
+
     async Task MainLoop()
     {
         await collection.WarmUp();
@@ -42,17 +44,9 @@ try
                 collection.State = BenchmarkCollection.StateEnum.Sampling;
                 await bench.GetSampleAsync();
 
-                if (Console.KeyAvailable)
+                if (resetEvent.WaitOne(0))
                 {
-                    var key = Console.ReadKey(true);
-                    if (key.Key == ConsoleKey.Delete)
-                    {
-                        foreach (var b in benchmarks)
-                        {
-                            b.Reset();
-                        }
-                        goto start;
-                    }
+                    goto start;
                 }
             }
             if (!config.ColdStart && i % config.RestartCount == config.RestartCount - 1)
@@ -72,6 +66,16 @@ try
             dash.Update();
             ctx.Refresh();
             await Task.Delay(100, cts.Token);
+
+            while (Console.KeyAvailable)
+            {
+                var key = Console.ReadKey(true);
+                if (key.Key == ConsoleKey.Delete)
+                {
+                    await collection.ResetAsync();
+                    _ = resetEvent.Set();
+                }
+            }
         }
     });
 

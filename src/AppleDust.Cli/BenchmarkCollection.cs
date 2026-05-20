@@ -75,6 +75,11 @@ internal sealed class BenchmarkCollection : IReadOnlyCollection<Benchmark>, IDis
         return new BenchmarkCollection(benchmarkList);
     }
 
+    public Task ResetAsync()
+    {
+        return Task.WhenAll(_benchmarks.Select(b => b.ResetAsync()));
+    }
+
     public async Task WarmUp()
     {
         State = StateEnum.Warmup;

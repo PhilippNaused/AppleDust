@@ -1,5 +1,6 @@
 using System.Collections.Immutable;
 using AppleDust.Shared;
+using DotNext.Threading;
 using Perfolizer.Mathematics.OutlierDetection;
 
 namespace AppleDust.Cli;
@@ -8,6 +9,8 @@ internal sealed class Benchmark(HostParameters hostConfig, string name, Cancella
 {
     private readonly List<double> _samplesRaw = new(50);
     private readonly List<double> _samplesGcRaw = new(50);
+    private readonly AsyncLock _lock = AsyncLock.Exclusive();
+    private ValueTask<AsyncLock.Scope> LockAsync() => _lock.AcquireAsync(cancellationToken);
 
     public string Name => name;
     public int Iterations { get; set; } = 1;
@@ -58,6 +61,7 @@ internal sealed class Benchmark(HostParameters hostConfig, string name, Cancella
 
     public async Task GetSampleAsync()
     {
+        using var _ = await LockAsync();
         _state = 2;
         (long nanos, long bytes) = await Host.GetSample(name, Iterations);
         var timeSample = (double)nanos / Iterations;
@@ -104,8 +108,9 @@ internal sealed class Benchmark(HostParameters hostConfig, string name, Cancella
         }
     }
 
-    public void Reset()
+    public async Task ResetAsync()
     {
+        using var _ = await LockAsync();
         _samplesRaw.Clear();
         _samplesGcRaw.Clear();
         Outliers = 0;
