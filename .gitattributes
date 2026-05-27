@@ -1,6 +1,7 @@
 * text=auto
 
 *.txt eol=lf
+*.rsp eol=lf
 
 # Source code
 *.cs diff=csharp eol=lf

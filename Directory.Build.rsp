@@ -1,0 +1,4 @@
+-noLogo
+# workaround for https://github.com/dotnet/msbuild/issues/13550
+# TODO: remove when 10.0.301 is released
+-nodeReuse:false
