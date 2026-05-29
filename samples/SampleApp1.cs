@@ -16,14 +16,8 @@ var builder = new BenchmarkBuilder();
 // #pragma warning restore RS0030 // Do not use banned APIs
 // builder.Add(() => null as object, "null");
 
-builder.Add(() => Work(100), "base");
-builder.Add(() => Work(20));
-builder.Add(() => Work(98));
-builder.Add(() => Work(99));
-builder.Add(() => Work(100));
-builder.Add(() => Work(101));
-builder.Add(() => Work(102));
-builder.Add(() => Work(200));
+builder.Add(Work, [100], "base");
+builder.Add(Work, [20, 98, 99, 100, 101, 102, 200]);
 builder.UseOverhead(() => Work(0));
 
 await builder.RunAsync(args).ConfigureAwait(false);

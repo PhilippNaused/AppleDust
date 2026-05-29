@@ -7,11 +7,33 @@ public sealed class BenchmarkBuilder
 {
     private readonly List<Benchmark> _benchmarks = [];
 
+    private void AddBenchmark(Benchmark benchmark)
+    {
+        if (_benchmarks.Any(b => b.Name == benchmark.Name))
+        {
+            throw new ArgumentException($"A benchmark with the name {benchmark.Name} already exists");
+        }
+        _benchmarks.Add(benchmark);
+    }
+
     public BenchmarkBuilder Add<T>(Func<T> func, [CallerArgumentExpression(nameof(func))] string? name = null)
     {
         name ??= func.Method.Name;
-        var b = new Benchmark<T>(func, name);
-        _benchmarks.Add(b);
+        AddBenchmark(new Benchmark<T>(func, name));
+        return this;
+    }
+
+    public BenchmarkBuilder Add<T, TP>(Func<TP, T> func, TP[] parameters, [CallerArgumentExpression(nameof(func))] string? name = null)
+    {
+        name ??= func.Method.Name;
+
+        foreach (TP parameter in parameters)
+        {
+            T f() => func(parameter);
+            var b = new Benchmark<T>(f, $"{name} ({parameter})");
+            AddBenchmark(b);
+        }
+
         return this;
     }
 
