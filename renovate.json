@@ -9,6 +9,10 @@
       "**/*.csproj"
     ]
   },
+  "assignAutomerge": true,
+  "assignees": [
+    "PhilippNaused"
+  ],
   "packageRules": [
     {
       "matchPackageNames": ["TUnit*"],
