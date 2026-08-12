@@ -18,7 +18,7 @@
     <PackageVersion Include="Pragmastat" Version="14.0.1" />
     <PackageVersion Include="Spectre.Console.Analyzer" Version="1.0.0" />
     <PackageVersion Include="Spectre.Console.Cli" Version="0.55.0" />
-    <PackageVersion Include="System.Diagnostics.PerformanceCounter" Version="10.0.10" />
+    <PackageVersion Include="System.Diagnostics.PerformanceCounter" Version="10.0.11" />
     <PackageVersion Include="TUnit" Version="1.64.0" />
   </ItemGroup>
 </Project>
