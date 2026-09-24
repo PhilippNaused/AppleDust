@@ -41,7 +41,7 @@ internal sealed class AppleWorker : IAppleRpc
     private Benchmark Get(string name) => _benchmarks.Single(b => b.Name == name);
 
     [MethodImpl(Utils.AggressiveOptimization)]
-    public Task<int> WarmUp(string name, int targetMs)
+    public Task<long> WarmUp(string name, int targetMs)
     {
         var benchmark = Get(name);
         benchmark.Pilot(targetMs);
@@ -55,7 +55,7 @@ internal sealed class AppleWorker : IAppleRpc
         return Task.FromResult(benchmark.Iterations);
     }
 
-    public Task<(long Nanos, long Bytes)> GetSample(string name, int iterations) => Task.FromResult(Get(name).Measure(iterations));
+    public Task<(long Nanos, long Bytes)> GetSample(string name, long iterations) => Task.FromResult(Get(name).Measure(iterations));
 
     public Task<string[]> GetNames() => Task.FromResult(_benchmarks.Select(b => b.Name).ToArray());
 }

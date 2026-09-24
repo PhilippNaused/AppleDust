@@ -55,7 +55,7 @@ internal sealed class AppleHost : IDisposable
         Shutdown();
     }
 
-    public Task<(long nanos, long bytes)> GetSample(string name, int i) => _caller!.GetSample(name, i);
+    public Task<(long nanos, long bytes)> GetSample(string name, long i) => _caller!.GetSample(name, i);
 
-    public Task<int> WarmUp(string name, int targetMs) => _caller!.WarmUp(name, targetMs);
+    public Task<long> WarmUp(string name, int targetMs) => _caller!.WarmUp(name, targetMs);
 }

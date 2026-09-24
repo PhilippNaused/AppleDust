@@ -24,7 +24,7 @@ internal static class Utils2
     // Number of milliseconds that each sample of the benchmark should take.
     // lower values will make the benchmark run faster, but may lead to higher relative errors.
     public const int TargetMs = 250;
-    public const int TargetNs = TargetMs * 1_000_000;
+    public const long TargetNs = TargetMs * 1_000_000L;
 
     public static Stats Analyze(ImmutableArray<double> samples)
     {

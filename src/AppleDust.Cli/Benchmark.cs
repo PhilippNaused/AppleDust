@@ -13,7 +13,7 @@ internal sealed class Benchmark(HostParameters hostConfig, string name, Cancella
     private ValueTask<AsyncLock.Scope> LockAsync() => _lock.AcquireAsync(cancellationToken);
 
     public string Name => name;
-    public int Iterations { get; set; } = 1;
+    public long Iterations { get; set; } = 1;
     public Stats Stats { get; private set; } = Stats.NaN;
     public Stats GcStats { get; private set; } = Stats.NaN;
     public bool IsBaseline => Baseline is null || Baseline == this;
@@ -81,7 +81,7 @@ internal sealed class Benchmark(HostParameters hostConfig, string name, Cancella
         }
         if (!coldStart)
         {
-            Iterations = (int)(Utils2.TargetNs / timeSample);
+            Iterations = (long)(Utils2.TargetNs / timeSample);
             Iterations = Math.Max(Iterations, Utils.MinIterations);
         }
         _samplesRaw.Add(timeSample);

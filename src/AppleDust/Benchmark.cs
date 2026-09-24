@@ -9,9 +9,9 @@ internal sealed class Benchmark<T>(Func<T> func, string name) : Benchmark(name)
     private readonly Func<T> target = func;
 
     [MethodImpl(Utils.AggressiveOptimization | MethodImplOptions.NoInlining)]
-    protected override void Run(int iterations)
+    protected override void Run(long iterations)
     {
-        for (int i = 0; i < iterations; i++)
+        for (long i = 0; i < iterations; i++)
         {
             Consume(target());
         }
@@ -27,13 +27,13 @@ internal sealed class Benchmark<T>(Func<T> func, string name) : Benchmark(name)
 internal abstract class Benchmark(string name)
 {
     public string Name { get; } = name;
-    public int Iterations { get; set; } = Utils.MinIterations;
+    public long Iterations { get; set; } = Utils.MinIterations;
 
     [MethodImpl(Utils.AggressiveOptimization | MethodImplOptions.NoInlining)]
-    protected abstract void Run(int iterations);
+    protected abstract void Run(long iterations);
 
     [MethodImpl(Utils.AggressiveOptimization)]
-    internal (long Nanos, long Bytes) Measure(int iterations)
+    internal (long Nanos, long Bytes) Measure(long iterations)
     {
         var sw = new Stopwatch();
         var before = GcHelper.GetAllocatedBytes();

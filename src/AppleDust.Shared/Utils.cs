@@ -13,7 +13,7 @@ internal static class Utils
     public const string ErrorPrefix = "Error:";
 
     public const int JitDelayMs = 500;
-    public const int MinIterations = 4;
+    public const long MinIterations = 4;
 
     public const MethodImplOptions AggressiveOptimization = (MethodImplOptions)0x0200;
 

@@ -34,9 +34,9 @@ internal sealed class RpcCaller(IDuplexPipe pipe, CancellationToken cancellation
         return await pipe.ReadLineAsync(cancellationToken) ?? throw new EndOfStreamException();
     }
 
-    public Task<int> WarmUp(string name, int targetMs) => InvokeAsync<int>(WarmUp, name, targetMs);
+    public Task<long> WarmUp(string name, int targetMs) => InvokeAsync<long>(WarmUp, name, targetMs);
 
-    public Task<(long Nanos, long Bytes)> GetSample(string name, int iterations) => InvokeAsync<(long Nanos, long Bytes)>(GetSample, name, iterations);
+    public Task<(long Nanos, long Bytes)> GetSample(string name, long iterations) => InvokeAsync<(long Nanos, long Bytes)>(GetSample, name, iterations);
 
     public Task<string[]> GetNames() => InvokeAsync<string[]>(GetNames);
 }
