@@ -12,13 +12,15 @@ internal static class Utils2
     public static string AsTime(double nanos)
     {
         var abs = Abs(nanos);
-        if (abs < 1_000)
+        if (abs < 1)
+            return $"{nanos * 1e3:F3} ps";
+        if (abs < 1e3)
             return $"{nanos:F3} ns";
-        if (abs < 1_000_000)
-            return $"{nanos / 1_000:F3} µs";
-        if (abs < 1_000_000_000)
-            return $"{nanos / 1_000_000:F3} ms";
-        return $"{nanos / 1_000_000_000:F3} s";
+        if (abs < 1e6)
+            return $"{nanos / 1e3:F3} µs";
+        if (abs < 1e9)
+            return $"{nanos / 1e6:F3} ms";
+        return $"{nanos / 1e9:F3} s";
     }
 
     // Number of milliseconds that each sample of the benchmark should take.
