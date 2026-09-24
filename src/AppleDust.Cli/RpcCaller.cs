@@ -2,7 +2,7 @@ using AppleDust.Shared;
 
 namespace AppleDust.Cli;
 
-internal sealed class RpcCaller(IDuplexPipe pipe, CancellationToken cancellationToken) : IAppleRpc
+internal sealed class RpcCaller(DuplexPipe pipe, CancellationToken cancellationToken) : IAppleRpc
 {
     public void Dispose()
     {

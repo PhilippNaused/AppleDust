@@ -3,7 +3,7 @@ using AppleDust.Shared;
 
 namespace AppleDust;
 
-internal sealed class RpcClient<T>(T instance, IDuplexPipe pipe)
+internal sealed class RpcClient<T>(T instance, DuplexPipe pipe)
 {
     private static readonly Dictionary<string, MethodInfo> _methods = typeof(T).GetMethods().ToDictionary(m => m.Name);
 

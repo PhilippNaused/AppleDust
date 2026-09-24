@@ -1,28 +1,24 @@
-using System.IO.Pipes;
 using System.Text;
 
 namespace AppleDust.Shared;
 
-internal interface IDuplexPipe : IDisposable
+internal sealed class DuplexPipe : IDisposable
 {
-    Task WriteLineAsync(string line, CancellationToken cancellationToken = default);
-    Task<string?> ReadLineAsync(CancellationToken cancellationToken = default);
-}
+    private readonly StreamReader _reader;
+    private readonly StreamWriter _writer;
 
-internal abstract class DuplexPipeBase : IDuplexPipe
-{
-    protected readonly PipeStream _inPipe;
-    protected readonly PipeStream _outPipe;
-    protected readonly StreamReader _reader;
-    protected readonly StreamWriter _writer;
-
-    protected DuplexPipeBase(PipeStream inPipe, PipeStream outPipe)
+    public DuplexPipe(Stream inPipe, Stream outPipe)
     {
-        _inPipe = inPipe;
-        _outPipe = outPipe;
         var encoding = new UTF8Encoding(false);
-        _reader = new StreamReader(_inPipe, encoding);
-        _writer = new StreamWriter(_outPipe, encoding) { AutoFlush = true };
+        _reader = new StreamReader(inPipe, encoding);
+        _writer = new StreamWriter(outPipe, encoding) { AutoFlush = true };
+    }
+
+    public DuplexPipe(StreamReader reader, StreamWriter writer)
+    {
+        _reader = reader;
+        _writer = writer;
+        _writer.AutoFlush = true;
     }
 
     /// <inheritdoc />
@@ -30,8 +26,6 @@ internal abstract class DuplexPipeBase : IDuplexPipe
     {
         _reader.Dispose();
         _writer.Dispose();
-        _inPipe.Dispose();
-        _outPipe.Dispose();
     }
 
     public Task WriteLineAsync(string line, CancellationToken cancellationToken = default)
@@ -50,47 +44,5 @@ internal abstract class DuplexPipeBase : IDuplexPipe
 #else
         return _reader.ReadLineAsync();
 #endif
-    }
-}
-
-internal sealed class DuplexClient : DuplexPipeBase
-{
-    public static DuplexClient FromHandles(string inPipeHandle, string outPipeHandle)
-    {
-        var inPipe = new AnonymousPipeClientStream(PipeDirection.In, inPipeHandle);
-        var outPipe = new AnonymousPipeClientStream(PipeDirection.Out, outPipeHandle);
-        return new DuplexClient(inPipe, outPipe);
-    }
-
-    private DuplexClient(AnonymousPipeClientStream inPipe, AnonymousPipeClientStream outPipe)
-        : base(inPipe, outPipe)
-    {
-    }
-}
-
-internal sealed class DuplexServer : DuplexPipeBase
-{
-    public static DuplexServer Create(HandleInheritability inheritability)
-    {
-        var inPipe = new AnonymousPipeServerStream(PipeDirection.In, inheritability);
-        var outPipe = new AnonymousPipeServerStream(PipeDirection.Out, inheritability);
-        return new DuplexServer(inPipe, outPipe);
-    }
-
-    private DuplexServer(AnonymousPipeServerStream inPipe, AnonymousPipeServerStream outPipe)
-        : base(inPipe, outPipe)
-    {
-    }
-
-    public (string InHandle, string OutHandle) GetClientHandles()
-    {
-        return (InHandle: ((AnonymousPipeServerStream)_inPipe).GetClientHandleAsString(),
-                OutHandle: ((AnonymousPipeServerStream)_outPipe).GetClientHandleAsString());
-    }
-
-    public void DisposeLocalCopyOfClientHandles()
-    {
-        ((AnonymousPipeServerStream)_inPipe).DisposeLocalCopyOfClientHandle();
-        ((AnonymousPipeServerStream)_outPipe).DisposeLocalCopyOfClientHandle();
     }
 }

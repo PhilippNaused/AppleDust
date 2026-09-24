@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
+using System.Text;
 using AppleDust.Shared;
 
 namespace AppleDust;
@@ -7,13 +8,16 @@ namespace AppleDust;
 internal sealed class AppleWorker : IAppleRpc
 {
     private readonly IReadOnlyList<Benchmark> _benchmarks;
-    private readonly DuplexClient _pipe;
+    private readonly DuplexPipe _pipe;
     private readonly RpcClient<IAppleRpc> _rpcClient;
 
-    private AppleWorker(string downPipeHandle, string upPipeHandle, IReadOnlyList<Benchmark> benchmarks)
+    private AppleWorker(IReadOnlyList<Benchmark> benchmarks)
     {
         _benchmarks = benchmarks;
-        _pipe = DuplexClient.FromHandles(downPipeHandle, upPipeHandle);
+        var encoding = new UTF8Encoding(false);
+        Console.InputEncoding = encoding;
+        Console.OutputEncoding = encoding;
+        _pipe = new DuplexPipe(Console.OpenStandardInput(), Console.OpenStandardOutput());
         _rpcClient = new RpcClient<IAppleRpc>(this, _pipe);
     }
 
@@ -30,10 +34,10 @@ internal sealed class AppleWorker : IAppleRpc
         _pipe.Dispose();
     }
 
-    internal static async Task RunAsync(IReadOnlyList<Benchmark> benchmarks, string[] args)
+    internal static async Task RunAsync(IReadOnlyList<Benchmark> benchmarks)
     {
         Process.GetCurrentProcess().PriorityClass = ProcessPriorityClass.High;
-        using var client = new AppleWorker(args[0], args[1], benchmarks);
+        using var client = new AppleWorker(benchmarks);
 
         await client._rpcClient.RunAsync();
     }

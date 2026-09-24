@@ -20,7 +20,7 @@ builder.Add(Work, [100], "base");
 builder.Add(Work, [20, 98, 99, 100, 101, 102, 200]);
 builder.UseOverhead(() => Work(0));
 
-await builder.RunAsync(args).ConfigureAwait(false);
+await builder.RunAsync().ConfigureAwait(false);
 
 static object? Work(int it)
 {

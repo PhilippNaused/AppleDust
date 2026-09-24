@@ -6,19 +6,17 @@ namespace AppleDust.Cli;
 internal sealed class RpcProcess : IDisposable
 {
     private readonly Process? _process;
-    private readonly DuplexServer _pipe;
-    public IDuplexPipe Pipe => _pipe;
+    public DuplexPipe Pipe { get; }
 
     public RpcProcess(HostParameters parameters, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
-        _pipe = DuplexServer.Create(HandleInheritability.Inheritable);
-        var handles = _pipe.GetClientHandles();
         var startInfo = new ProcessStartInfo(parameters.Path)
         {
             UseShellExecute = false,
-            ArgumentList = { handles.OutHandle, handles.InHandle },
-            CreateNoWindow = false
+            CreateNoWindow = false,
+            RedirectStandardInput = true,
+            RedirectStandardOutput = true,
         };
         if (parameters.DisableConcurrentGc)
         {
@@ -38,17 +36,17 @@ internal sealed class RpcProcess : IDisposable
             startInfo.EnvironmentVariables["COREHOST_EnableDiagnostics"] = "0";
         }
         _process = Process.Start(startInfo)!;
+        Pipe = new DuplexPipe(_process.StandardOutput, _process.StandardInput);
         if (_process is null)
         {
             Dispose();
             throw new InvalidOperationException($"Failed to start process: '{parameters.Path}'");
         }
-        _pipe.DisposeLocalCopyOfClientHandles();
     }
 
     public void Dispose()
     {
-        _pipe.Dispose();
+        Pipe.Dispose();
         if (_process is not null)
         {
             _process.Kill();
