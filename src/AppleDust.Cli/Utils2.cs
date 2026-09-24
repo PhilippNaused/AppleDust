@@ -181,7 +181,13 @@ internal static class Utils2
 
     extension(ImmutableArray<double> samples)
     {
-        public Sample AsSample() => new(samples.Where(double.IsNormal).Where(double.IsPositive).ToList());
+        public Sample AsSample()
+        {
+            var list = samples.Where(double.IsNormal).Where(double.IsPositive).ToList();
+            if (list.Count == 0)
+                list.Add(1);
+            return new(list);
+        }
     }
 }
 
