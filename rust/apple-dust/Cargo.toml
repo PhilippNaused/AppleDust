@@ -1,0 +1,47 @@
+[package]
+name = "apple-dust"
+version = "0.1.0"
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+publish = false
+
+# cspell:words alloca
+
+[dependencies]
+alloca = { version = "0.4", optional = true }
+fastrand = { version = "2.5", optional = true }
+page_size = { version = "0.6", optional = true }
+
+[features]
+default = ["stack_randomization", "track_alloc"]
+stack_randomization = ["dep:alloca", "dep:page_size", "dep:fastrand"]
+track_alloc = []
+
+[lints.clippy]
+# cargo_common_metadata = "warn"
+# impl_trait_in_params = "warn"
+# missing_errors_doc = "warn"
+allow_attributes = "warn"
+clear_with_drain = "warn"
+dbg_macro = "deny"
+empty_drop = "warn"
+error_impl_error = "warn"
+expect_used = "warn"
+float_cmp_const = "warn"
+get_unwrap = "warn"
+large_stack_frames = "warn"
+missing_asserts_for_indexing = "warn"
+missing_const_for_fn = "warn"
+non_zero_suggestions = "warn"
+precedence_bits = "warn"
+redundant_test_prefix = "warn"
+renamed_function_params = "warn"
+self_named_module_files = "warn"
+str_to_string = "warn"
+tests_outside_test_module = "deny"
+todo = "warn"
+too_many_lines = "warn"
+use_debug = "warn"
+use_self = "warn"

@@ -10,12 +10,15 @@
     ".config/dicts/**",
     ".config/dotnet-tools.json",
     ".git*",
+    ".vscode/*",
     "*.DotSettings",
     "*.svg",
     "tests/**/Snapshots/**"
   ],
   "dictionaries": [
-    "project-words"
+    "project-words",
+    "rust",
+    "rust-crates"
   ],
   "dictionaryDefinitions": [
     {
