@@ -1,0 +1,15 @@
+[workspace]
+resolver = "3"
+members = ["rust/apple-dust"]
+package.authors = ["Philipp Naused <philipp.naused@t-online.de>"]
+package.edition = "2024"
+package.license = "MIT"
+package.repository = "https://github.com/PhilippNaused/AppleDust"
+
+# cspell:words codegen
+[profile.bench]
+codegen-units = 1
+debug = false
+lto = "fat"
+opt-level = 3
+strip = true

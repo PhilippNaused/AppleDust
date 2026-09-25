@@ -15,7 +15,9 @@
     "tests/**/Snapshots/**"
   ],
   "dictionaries": [
-    "project-words"
+    "project-words",
+    "rust",
+    "rust-crates"
   ],
   "dictionaryDefinitions": [
     {
