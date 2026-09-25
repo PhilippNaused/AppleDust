@@ -10,6 +10,7 @@
     ".config/dicts/**",
     ".config/dotnet-tools.json",
     ".git*",
+    ".vscode/*",
     "*.DotSettings",
     "*.svg",
     "tests/**/Snapshots/**"
