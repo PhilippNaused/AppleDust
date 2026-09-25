@@ -20,18 +20,6 @@ const UNROLL_FACTOR: u64 = 4;
 const _A: () = assert!(UNROLL_FACTOR > 0, "The unroll factor cannot be 0");
 const SAMPLE_OVERHEAD: &str = "Overhead";
 
-#[cfg(feature = "stack_randomization")]
-#[inline(always)]
-#[must_use]
-fn with_rand_stack<F, O>(func: &mut F) -> O
-where
-    F: FnMut() -> O,
-{
-    let size = fastrand::usize(0..page_size::get());
-    // cspell:words alloca
-    alloca::with_alloca(size, |_s: &mut [_]| black_box(func()))
-}
-
 impl<'a> BenchmarkBuilder<'a> {
     fn add_benchmark<B: Benchmark + 'a>(&mut self, b: B) {
         self.benchmarks.push(Box::new(b));
@@ -133,7 +121,7 @@ where
     }
 
     #[inline(never)]
-    fn run(&mut self, iters: u64) -> u64 {
+    fn sample_inner(&mut self, iters: u64) -> u64 {
         let iters = iters / UNROLL_FACTOR;
         let time_start = Instant::now();
         for _ in 0..iters {
@@ -142,14 +130,6 @@ where
             }
         }
         time_start.elapsed().as_nanos() as u64
-    }
-
-    #[inline(always)]
-    fn sample_inner(&mut self, iters: u64) -> u64 {
-        cfg_select! {
-            feature = "stack_randomization" => with_rand_stack(&mut || self.run(iters)),
-            _ => self.run(iters),
-        }
     }
 }
 

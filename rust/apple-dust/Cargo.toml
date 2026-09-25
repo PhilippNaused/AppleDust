@@ -7,16 +7,10 @@ license.workspace = true
 repository.workspace = true
 publish = false
 
-# cspell:words alloca
-
 [dependencies]
-alloca = { version = "0.4", optional = true }
-fastrand = { version = "2.5", optional = true }
-page_size = { version = "0.6", optional = true }
 
 [features]
-default = ["stack_randomization", "track_alloc"]
-stack_randomization = ["dep:alloca", "dep:page_size", "dep:fastrand"]
+default = ["track_alloc"]
 track_alloc = []
 
 [lints.clippy]
