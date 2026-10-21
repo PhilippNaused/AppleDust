@@ -28,7 +28,7 @@ impl<'a> BenchmarkBuilder<'a> {
 
     pub fn add_function<F, A, R>(mut self, arg: A, func: F, name: &'static str) -> Self
     where
-        F: Fn(&mut A) -> R + 'a,
+        F: FnMut(&mut A) -> R + 'a,
         A: 'a,
         R: 'a,
     {
@@ -36,9 +36,9 @@ impl<'a> BenchmarkBuilder<'a> {
         self
     }
 
-    pub fn add_function2<F, R>(self, func: F, name: &'static str) -> Self
+    pub fn add_function2<F, R>(self, mut func: F, name: &'static str) -> Self
     where
-        F: Fn() -> R + 'a,
+        F: FnMut() -> R + 'a,
         R: 'a,
     {
         let f2 = move |&mut (): &mut ()| func();
@@ -47,7 +47,7 @@ impl<'a> BenchmarkBuilder<'a> {
 
     pub fn add_overhead<F, A, R>(self, arg: A, func: F) -> Self
     where
-        F: Fn(&mut A) -> R + 'a,
+        F: FnMut(&mut A) -> R + 'a,
         A: 'a,
         R: 'a,
     {
@@ -115,7 +115,7 @@ assert_obj_safe!(Benchmark);
 #[derive(Debug)]
 struct BenchmarkImpl<F, A, R>
 where
-    F: Fn(&mut A) -> R,
+    F: FnMut(&mut A) -> R,
 {
     arg: A,
     func: F,
@@ -125,7 +125,7 @@ where
 
 impl<F, A, R> BenchmarkImpl<F, A, R>
 where
-    F: Fn(&mut A) -> R,
+    F: FnMut(&mut A) -> R,
 {
     pub const fn new(arg: A, func: F, name: &'static str) -> Self {
         Self {
@@ -152,7 +152,7 @@ where
 
 impl<F, A, R> Benchmark for BenchmarkImpl<F, A, R>
 where
-    F: Fn(&mut A) -> R,
+    F: FnMut(&mut A) -> R,
 {
     #[inline]
     fn iters(&self) -> u64 {
