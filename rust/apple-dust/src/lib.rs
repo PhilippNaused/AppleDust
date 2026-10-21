@@ -1,3 +1,4 @@
+use static_assertions_next::*;
 use std::cmp::max;
 use std::env;
 use std::fmt::Debug;
@@ -7,9 +8,9 @@ use std::time::{Duration, Instant};
 mod track_alloc;
 mod worker;
 
+pub use core::hint::black_box;
 #[cfg(feature = "track_alloc")]
 pub use track_alloc::AllocTracker;
-pub use core::hint::black_box;
 
 #[derive(Default)]
 pub struct BenchmarkBuilder<'a> {
@@ -25,21 +26,32 @@ impl<'a> BenchmarkBuilder<'a> {
         self.benchmarks.push(Box::new(b));
     }
 
-    pub fn add_function<O, F>(mut self, func: F, name: &'static str) -> Self
+    pub fn add_function<F, A, R>(mut self, arg: A, func: F, name: &'static str) -> Self
     where
-        F: FnMut() -> O + 'a,
-        O: 'a,
+        F: Fn(&mut A) -> R + 'a,
+        A: 'a,
+        R: 'a,
     {
-        self.add_benchmark(BenchmarkImpl::new(func, name));
+        self.add_benchmark(BenchmarkImpl::new(arg, func, name));
         self
     }
 
-    pub fn add_overhead<O, F>(self, func: F) -> Self
+    pub fn add_function2<F, R>(self, func: F, name: &'static str) -> Self
     where
-        F: FnMut() -> O + 'a,
-        O: 'a,
+        F: Fn() -> R + 'a,
+        R: 'a,
     {
-        self.add_function(func, SAMPLE_OVERHEAD)
+        let f2 = move |&mut (): &mut ()| func();
+        self.add_function((), f2, name)
+    }
+
+    pub fn add_overhead<F, A, R>(self, arg: A, func: F) -> Self
+    where
+        F: Fn(&mut A) -> R + 'a,
+        A: 'a,
+        R: 'a,
+    {
+        self.add_function(arg, func, SAMPLE_OVERHEAD)
     }
 
     fn build(mut self) -> worker::AppleWorker<'a> {
@@ -47,7 +59,7 @@ impl<'a> BenchmarkBuilder<'a> {
             panic!("No benchmarks added");
         }
         if self.benchmarks.iter().all(|b| b.name() != SAMPLE_OVERHEAD) {
-            self = self.add_overhead(|| 0); // ~100 ps
+            self = self.add_overhead(0, |a| *a); // ~200 ps
         }
         worker::AppleWorker::new(self.benchmarks)
     }
@@ -98,24 +110,28 @@ trait Benchmark {
     fn pilot(&mut self, target: Duration);
 }
 
+assert_obj_safe!(Benchmark);
+
 #[derive(Debug)]
-struct BenchmarkImpl<T, F>
+struct BenchmarkImpl<F, A, R>
 where
-    F: FnMut() -> T,
+    F: Fn(&mut A) -> R,
 {
+    arg: A,
     func: F,
-    _name: &'static str,
+    name: &'static str,
     iters: u64,
 }
 
-impl<T, F> BenchmarkImpl<T, F>
+impl<F, A, R> BenchmarkImpl<F, A, R>
 where
-    F: FnMut() -> T,
+    F: Fn(&mut A) -> R,
 {
-    pub const fn new(func: F, _name: &'static str) -> Self {
+    pub const fn new(arg: A, func: F, name: &'static str) -> Self {
         Self {
+            arg,
             func,
-            _name,
+            name,
             iters: UNROLL_FACTOR,
         }
     }
@@ -124,18 +140,19 @@ where
     fn sample_inner(&mut self, iters: u64) -> u64 {
         let iters = iters / UNROLL_FACTOR;
         let time_start = Instant::now();
+        let a = &mut self.arg;
         for _ in 0..iters {
             for _ in 0..UNROLL_FACTOR {
-                _ = black_box((self.func)());
+                _ = black_box((self.func)(black_box(a)));
             }
         }
         time_start.elapsed().as_nanos() as u64
     }
 }
 
-impl<T, F> Benchmark for BenchmarkImpl<T, F>
+impl<F, A, R> Benchmark for BenchmarkImpl<F, A, R>
 where
-    F: FnMut() -> T,
+    F: Fn(&mut A) -> R,
 {
     #[inline]
     fn iters(&self) -> u64 {
@@ -144,7 +161,7 @@ where
 
     #[inline]
     fn name(&self) -> &'static str {
-        self._name
+        self.name
     }
 
     #[inline(never)]

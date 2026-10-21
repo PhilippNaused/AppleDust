@@ -11,18 +11,9 @@ static ALLOCATOR: AllocTracker<std::alloc::System> = AllocTracker::system();
 #[expect(clippy::redundant_closure)]
 fn main() -> Result<(), std::io::Error> {
     BenchmarkBuilder::default()
-        .add_function(
-            || thread::sleep(Duration::ZERO),
-            "sleep0",
-        )
-        .add_function(
-            || thread::sleep(Duration::from_nanos(1)),
-            "sleep1ns",
-        )
-        .add_function(
-            || thread::yield_now(),
-            "yield_now",
-        )
-        .add_function(|| vec![0u8; 1234], "test_alloc")
+        .add_function2(|| thread::sleep(Duration::ZERO), "sleep0")
+        .add_function2(|| thread::sleep(Duration::from_nanos(1)), "sleep1ns")
+        .add_function2(|| thread::yield_now(), "yield_now")
+        .add_function2(|| vec![0u8; 1234], "test_alloc")
         .run()
 }

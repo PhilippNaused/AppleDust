@@ -8,6 +8,7 @@ repository.workspace = true
 publish = false
 
 [dependencies]
+static_assertions_next = "1.1"
 
 [features]
 default = ["track_alloc"]
