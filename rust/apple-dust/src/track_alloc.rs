@@ -1,5 +1,5 @@
 use std::{
-    alloc::GlobalAlloc,
+    alloc::{GlobalAlloc, Layout},
     sync::atomic::{AtomicU64, Ordering},
 };
 
@@ -44,18 +44,47 @@ pub fn reset() {
 
 static GLOBAL_ALLOC_COUNTER: AtomicU64 = AtomicU64::new(0);
 
+#[inline(always)]
+fn inc_global_counter(size: usize) {
+    GLOBAL_ALLOC_COUNTER.fetch_add(size as u64, ORDERING);
+}
+
 unsafe impl<A: GlobalAlloc> GlobalAlloc for AllocTracker<A> {
-    #[inline]
-    unsafe fn alloc(&self, layout: std::alloc::Layout) -> *mut u8 {
+    #[inline(always)]
+    unsafe fn alloc(&self, layout: Layout) -> *mut u8 {
         let ptr = unsafe { self.inner.alloc(layout) };
         if !ptr.is_null() {
-            GLOBAL_ALLOC_COUNTER.fetch_add(layout.size() as u64, ORDERING);
+            inc_global_counter(layout.size());
         }
         ptr
     }
 
-    #[inline]
-    unsafe fn dealloc(&self, ptr: *mut u8, layout: std::alloc::Layout) {
+    #[inline(always)]
+    unsafe fn dealloc(&self, ptr: *mut u8, layout: Layout) {
         unsafe { self.inner.dealloc(ptr, layout) };
+    }
+
+    #[inline(always)]
+    unsafe fn alloc_zeroed(&self, layout: Layout) -> *mut u8 {
+        let ptr = unsafe { self.inner.alloc_zeroed(layout) };
+        if !ptr.is_null() {
+            inc_global_counter(layout.size());
+        }
+        ptr
+    }
+
+    #[inline(always)]
+    unsafe fn realloc(&self, ptr: *mut u8, layout: Layout, new_size: usize) -> *mut u8 {
+        let new_ptr = unsafe { self.inner.realloc(ptr, layout, new_size) };
+        if !new_ptr.is_null() {
+            if ptr != new_ptr {
+                inc_global_counter(new_size); // complete new allocation
+            } else if new_size > layout.size() {
+                inc_global_counter(new_size - layout.size()); // grow
+            } else {
+                // shrink
+            }
+        }
+        new_ptr
     }
 }

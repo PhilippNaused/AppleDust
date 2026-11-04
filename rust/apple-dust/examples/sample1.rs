@@ -15,5 +15,6 @@ fn main() -> Result<(), std::io::Error> {
         .add_function2(|| thread::sleep(Duration::from_nanos(1)), "sleep1ns")
         .add_function2(|| thread::yield_now(), "yield_now")
         .add_function2(|| vec![0u8; 1234], "test_alloc")
+        .add_function2(|| vec![0u8; 10].reserve(128), "test_realloc")
         .run()
 }
