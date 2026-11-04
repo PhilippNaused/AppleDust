@@ -17,7 +17,7 @@ pub struct BenchmarkBuilder<'a> {
     benchmarks: Vec<Box<dyn Benchmark + 'a>>,
 }
 
-const UNROLL_FACTOR: u64 = 4;
+const UNROLL_FACTOR: u64 = 1;
 const _A: () = assert!(UNROLL_FACTOR > 0, "The unroll factor cannot be 0");
 const SAMPLE_OVERHEAD: &str = "Overhead";
 
