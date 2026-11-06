@@ -52,13 +52,13 @@ try
                     goto start;
                 }
             }
+            if (collection.Min(b => b.SampleCount) >= config.RestartCount)
+                collection.CheckOverhead();
             if (!config.ColdStart && i % config.RestartCount == config.RestartCount - 1)
             {
                 await collection.RestartAsync(true);
                 await collection.CoolDown(cts.Token);
             }
-            if (collection.Min(b => b.SampleCount) >= config.RestartCount)
-                collection.CheckOverhead();
         }
     }
 
