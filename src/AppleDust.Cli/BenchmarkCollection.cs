@@ -3,11 +3,9 @@ using System.Diagnostics;
 
 namespace AppleDust.Cli;
 
-internal sealed class BenchmarkCollection : IReadOnlyCollection<Benchmark>, IDisposable
+internal sealed class BenchmarkCollection : IEnumerable<Benchmark>, IDisposable
 {
-    private readonly List<Benchmark> _benchmarks;
-
-    public IReadOnlyList<Benchmark> Benchmarks => _benchmarks;
+    private List<Benchmark> _benchmarks;
     private readonly ParallelOptions _parallelOptions;
     private readonly Stopwatch _stopwatch = new();
 
@@ -17,6 +15,7 @@ internal sealed class BenchmarkCollection : IReadOnlyCollection<Benchmark>, IDis
     /// <inheritdoc />
     public int Count => _benchmarks.Count;
     public StateEnum State { get; set; } = StateEnum.Idle;
+    public bool DisableOverhead { get; set; }
 
     public enum StateEnum
     {
@@ -25,6 +24,21 @@ internal sealed class BenchmarkCollection : IReadOnlyCollection<Benchmark>, IDis
         Cooldown = 2,
         Sampling = 3,
     }
+
+    public IEnumerable<Benchmark> Enumerate() => this;
+
+    /// <inheritdoc />
+    public IEnumerator<Benchmark> GetEnumerator()
+    {
+        if (DisableOverhead)
+        {
+            return _benchmarks.Where(b => !b.IsOverhead).GetEnumerator();
+        }
+        return _benchmarks.GetEnumerator();
+    }
+
+    /// <inheritdoc />
+    IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
     private BenchmarkCollection(List<Benchmark> benchmarks)
     {
@@ -130,9 +144,24 @@ internal sealed class BenchmarkCollection : IReadOnlyCollection<Benchmark>, IDis
         }
     }
 
-    /// <inheritdoc />
-    public IEnumerator<Benchmark> GetEnumerator() => _benchmarks.GetEnumerator();
-
-    /// <inheritdoc />
-    IEnumerator IEnumerable.GetEnumerator() => _benchmarks.GetEnumerator();
+    internal void CheckOverhead()
+    {
+        if (DisableOverhead)
+            return;
+        var overheads = _benchmarks.Where(b => b.IsOverhead).Select(b => b.Stats.Center).ToList();
+        var others = _benchmarks.Where(b => !b.IsOverhead).Select(b => b.Stats.Center).ToList();
+        if (overheads.Count == 0 || others.Count == 0)
+            return;
+        var max_overhead = overheads.Max();
+        var min_others = others.Min();
+        if (max_overhead * 100 < min_others)
+        {
+            DisableOverhead = true;
+            foreach (var b in _benchmarks.Where(b => b.IsOverhead))
+            {
+                b.Dispose();
+            }
+            _benchmarks = _benchmarks.Where(b => !b.IsOverhead).ToList();
+        }
+    }
 }

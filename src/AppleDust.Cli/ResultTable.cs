@@ -8,12 +8,12 @@ namespace AppleDust.Cli;
 internal sealed class ResultTable : IRenderable
 {
     private readonly Table _table;
-    private readonly IReadOnlyList<Benchmark> _benchmarks;
+    private readonly BenchmarkCollection _benchmarks;
     private readonly Lock _lock = new();
 
     public ResultTable(BenchmarkCollection benchmarks)
     {
-        _benchmarks = benchmarks.Benchmarks;
+        _benchmarks = benchmarks;
         var headers = new TableRow().GetColumns().Select(c => c.Name).ToArray();
         _table = new Table()
         .Title("Benchmark Results")

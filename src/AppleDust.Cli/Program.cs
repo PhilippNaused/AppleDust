@@ -15,7 +15,6 @@ try
     var paths = args.Select(Path.GetFullPath).ToList();
     var benchmarkNames = await AppleHost.GetBenchmarksAsync(new HostParameters(paths.First()), cts.Token).WithStatus("Initializing...");
     using var collection = BenchmarkCollection.Create(paths, benchmarkNames, cts.Token);
-    var benchmarks = collection.Benchmarks;
 
     using var cpuMonitor = new CpuMonitor(cts.Token);
     CpuMonitor.ExpectedThreads = config.ConcurrentSamples + 1;
@@ -35,7 +34,7 @@ try
         for (int i = 0; !cts.IsCancellationRequested; i++)
         {
             // Add benchmarks that have discarded samples a second time.
-            List<Benchmark> benches = [.. benchmarks, .. benchmarks.Where(b => b.SampleCount < i)];
+            List<Benchmark> benches = [.. collection, .. collection.Where(b => b.SampleCount < i)];
             foreach (var bench in benches.Shuffle().Chunk(config.ConcurrentSamples)) // shuffle benchmarks to avoid bias.
             {
                 while (cpuMonitor.CpuQuality < 0)
@@ -58,6 +57,8 @@ try
                 await collection.RestartAsync(true);
                 await collection.CoolDown(cts.Token);
             }
+            if (collection.Min(b => b.SampleCount) >= config.RestartCount)
+                collection.CheckOverhead();
         }
     }
 
