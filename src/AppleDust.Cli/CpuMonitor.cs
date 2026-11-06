@@ -37,6 +37,8 @@ internal sealed class CpuMonitor : IDisposable
 
     public int CpuQuality { get; private set; }
 
+    public static int ExpectedThreads { get; set; } = 2;
+
     private static int GetQuality(double cpuUsage)
     {
         if (double.IsNaN(cpuUsage))
@@ -44,8 +46,7 @@ internal sealed class CpuMonitor : IDisposable
             Debug.Assert(!OperatingSystem.IsWindows());
             return 0;
         }
-        // 2 thread of work.
-        var target = 2d / Environment.ProcessorCount;
+        var target = ExpectedThreads / (double)Environment.ProcessorCount;
         target = Math.Max(target, 0.1); // at least 10% CPU usage is expected.
         if (cpuUsage < target)
         {

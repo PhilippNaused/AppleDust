@@ -18,6 +18,7 @@ try
     var benchmarks = collection.Benchmarks;
 
     using var cpuMonitor = new CpuMonitor(cts.Token);
+    CpuMonitor.ExpectedThreads = config.ConcurrentSamples + 1;
     var status = new ResultTable(collection);
     var dash = new Dashboard(status, collection, cpuMonitor);
 
@@ -35,8 +36,7 @@ try
         {
             // Add benchmarks that have discarded samples a second time.
             List<Benchmark> benches = [.. benchmarks, .. benchmarks.Where(b => b.SampleCount < i)];
-
-            foreach (var bench in benches.Shuffle()) // shuffle benchmarks to avoid bias.
+            foreach (var bench in benches.Shuffle().Chunk(config.ConcurrentSamples)) // shuffle benchmarks to avoid bias.
             {
                 while (cpuMonitor.CpuQuality < 0)
                 {
@@ -46,7 +46,7 @@ try
                 }
                 status.SetBorderStyle(Style.Plain);
                 collection.State = BenchmarkCollection.StateEnum.Sampling;
-                await bench.GetSampleAsync(config.ColdStart);
+                await Task.WhenAll(bench.Select(b => b.GetSampleAsync(config.ColdStart)));
 
                 if (resetEvent.WaitOne(0))
                 {
