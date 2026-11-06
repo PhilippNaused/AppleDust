@@ -5,7 +5,7 @@ use std::fmt::Debug;
 use std::time::{Duration, Instant};
 
 #[cfg(feature = "track_alloc")]
-mod track_alloc;
+pub mod track_alloc;
 mod worker;
 
 pub use core::hint::black_box;
