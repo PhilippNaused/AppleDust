@@ -85,6 +85,7 @@ internal sealed class Benchmark(HostParameters hostConfig, string name, Cancella
             Iterations = Math.Max(Iterations, Utils.MinIterations);
         }
         _samplesRaw.Add(timeSample);
+        memorySample *= (1 + Random.Shared.NextDouble() * 0.00001); // add noise to fix p-value calculation
         _samplesGcRaw.Add(memorySample);
         RemoveOutliers();
         UpdateStats();
